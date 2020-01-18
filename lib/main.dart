@@ -66,18 +66,29 @@ class PlayButton extends StatefulWidget {
 }
 
 class _PlayButtonState extends State<PlayButton> {
-  bool isPlaying = true;
-  IconData playButtonIcon = Icons.play_circle_outline;
-  IconData pauseButtonIcon = Icons.pause_circle_outline;
+  bool _isPlaying = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IconButton(
-        icon: isPlaying ? Icon(pauseButtonIcon) : Icon(playButtonIcon),
+        icon: _isPlaying
+          ? Icon(
+              Icons.play_circle_outline,
+              color: Colors.white,
+              size: 48.0,
+            )
+          : Icon(
+            Icons.pause_circle_outline,
+            color: Colors.white,
+            size: 48.0,
+            ),
         onPressed: () {
-          print('pressed!');
-          isPlaying = !isPlaying;
+          setState(() {
+            print('pressed!');
+            _isPlaying = !_isPlaying;
+            print(' isplaying? | $_isPlaying');
+          });
         }
       ),
     );

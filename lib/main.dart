@@ -47,39 +47,44 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
 
+  void _togglePlay() {
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:
-      Center(
+      body: Center(
         child: Column(
-        children: <Widget>[
-          Expanded(
-            child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Icon(
-                  Icons.forward_10,
-                  size: 48.0,
-                  ),
-                IconButton(
-                  onPressed: () => print('pressed!'),
-                  padding: new EdgeInsets.all(0.0),
-                  icon: Icon(
-                    Icons.play_circle_filled,
+          children: <Widget>[
+            Expanded(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Icon(
+                    Icons.forward_10,
                     size: 48.0,
+                  ),
+                  IconButton(
+                    onPressed: _togglePlay,
+                    padding: new EdgeInsets.all(0.0),
+                    icon: Icon(
+                      _isPlaying ? Icons.play_circle_filled : Icons.pause_circle_filled,
+                      size: 48.0,
                     ),
-                ),
-          Icon(
-            Icons.forward_30,
-            size: 48.0,
-            ),
+                  ),
+                  Icon(
+                    Icons.forward_30,
+                    size: 48.0,
+                  ),
+                ],
+              ),
+            )
           ],
-            ),
-        )],
-      ),
+        ),
       ),
     );
   }

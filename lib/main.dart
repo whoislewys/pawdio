@@ -21,7 +21,7 @@ void main() => runApp(MyApp());
 //         // is not restarted.
 //         primarySwatch: Colors.blue,
 //       ),
-//       home: PlayButton(title: 'Flutter Demo Home Page'),
+//       home: MyHomePage(title: 'Flutter Demo Home Page'),
 //     );
 //   }
 // }
@@ -30,66 +30,50 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: <Widget>[
-        Icon(
-          Icons.forward_30,
-          color: Colors.white,
-          size: 48.0,
-          semanticLabel: '15 secs',
-          ),
-        Transform(
-          alignment: Alignment.center,
-          transform: Matrix4.rotationY(pi),
-          child: Icon(
-            Icons.forward_10,
-            color: Colors.white,
-            size: 48.0,
-            semanticLabel: '30 secs',
-            ),
-        ),
-      ],
-    ),
+    return MaterialApp(
+      title: 'Shit in my ass',
+      home: MyHomePage(),
     );
   }
 }
 
-class PlayButton extends StatefulWidget {
-  PlayButton({Key key}) : super(key: key);
+class MyHomePage extends StatefulWidget {
+  MyHomePage({Key key}) : super(key: key);
 
   @override
-  _PlayButtonState createState() => _PlayButtonState();
+  _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _PlayButtonState extends State<PlayButton> {
+class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IconButton(
-        icon: _isPlaying
-          ? Icon(
-              Icons.play_circle_outline,
-              color: Colors.white,
+      body:
+      Center(
+        child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+            Icon(
+              Icons.forward_10,
               size: 48.0,
-            )
-          : Icon(
-            Icons.pause_circle_outline,
-            color: Colors.white,
+              ),
+            IconButton(
+              onPressed: () => print('pressed!'),
+              padding: new EdgeInsets.all(0.0),
+              icon: Icon(
+                Icons.play_circle_filled,
+                size: 48.0,
+                ),
+            ),
+          Icon(
+            Icons.forward_30,
             size: 48.0,
             ),
-        onPressed: () {
-          setState(() {
-            print('pressed!');
-            _isPlaying = !_isPlaying;
-            print(' isplaying? | $_isPlaying');
-          });
-        }
+          ],
+        ),
       ),
     );
   }

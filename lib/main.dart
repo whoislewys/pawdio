@@ -52,28 +52,34 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body:
       Center(
-        child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        child: Column(
         children: <Widget>[
-            Icon(
-              Icons.forward_10,
-              size: 48.0,
-              ),
-            IconButton(
-              onPressed: () => print('pressed!'),
-              padding: new EdgeInsets.all(0.0),
-              icon: Icon(
-                Icons.play_circle_filled,
-                size: 48.0,
+          Expanded(
+            child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Icon(
+                  Icons.forward_10,
+                  size: 48.0,
+                  ),
+                IconButton(
+                  onPressed: () => print('pressed!'),
+                  padding: new EdgeInsets.all(0.0),
+                  icon: Icon(
+                    Icons.play_circle_filled,
+                    size: 48.0,
+                    ),
                 ),
-            ),
           Icon(
             Icons.forward_30,
             size: 48.0,
             ),
           ],
-        ),
+            ),
+        )],
+      ),
       ),
     );
   }

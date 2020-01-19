@@ -51,17 +51,19 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String patriceAudio = 'assets//ppatrice-were-better.mp3';
+  String patriceAudio = 'assets/patrice-were-better.mp3';
   bool _isPlaying = true;
-  FlutterSound _sound;
+  FlutterSound _player;
+  double _duration;
   double _playPosition;
   StreamSubscription<PlayStatus> _playerSubscription;
 
   @override
   void initState() {
     super.initState();
-    _sound = FlutterSound();
-    _playPosition = 0;
+    _player = FlutterSound();
+    _playPosition = 0.0;
+    _duration = 0.0;
     SchedulerBinding.instance.addPostFrameCallback((_) => _play(patriceAudio));
   }
 
@@ -73,23 +75,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _cleanup() async {
-    await _sound.stopPlayer();
+    await _player.stopPlayer();
     _playerSubscription.cancel();
   }
 
   void _stop() async {
-    await _sound.pausePlayer();
+    await _player.pausePlayer();
     setState(() => _isPlaying = false);
   }
 
   void _play(String url) async {
     // todo: play the local patrice file
     ByteData localAudio = await rootBundle.load(url);
-    await _sound.startPlayerFromBuffer(localAudio.buffer.asUint8List());
-    _playerSubscription = _sound.onPlayerStateChanged.listen((e) {
+    await _player.startPlayerFromBuffer(localAudio.buffer.asUint8List());
+    _playerSubscription = _player.onPlayerStateChanged.listen((e) {
       if (e != null) {
-        print(e.currentPosition);
-        setState(() => _playPosition = (e.currentPosition / e.duration));
+        if (_isPlaying) {
+          print('position: ${e.currentPosition}');
+          print('duration ${e.duration}');
+        }
+        setState(() {
+          _playPosition = e.currentPosition;
+          _duration = e.duration;
+        });
       }
     });
     setState(() => _isPlaying = true);
@@ -99,20 +107,32 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          children: <Widget>[
-            Slider(
-              value: _playPosition,
-              onChanged: null,
-            ),
-            Expanded(
-              child: Row(
+        child: Container(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            children: <Widget>[
+              Slider(
+                value: _playPosition,
+                min: 0.0,
+                max: _duration,
+                onChanged: (double value) {
+                  setState(() {
+                    print('slider changed to $value');
+                    int msToSeekTo = value.toInt() - 100;
+                    _player.seekToPlayer(msToSeekTo);
+                  });
+                },
+              ),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Icon(
-                    Icons.forward_10,
-                    size: 48.0,
+                  IconButton(
+                    onPressed: () =>
+                        _player.seekToPlayer((_playPosition - 10000.0).toInt()),
+                    icon: Icon(
+                      Icons.forward_10,
+                      size: 48.0,
+                    ),
                   ),
                   IconButton(
                     onPressed: () {
@@ -124,18 +144,24 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     padding: new EdgeInsets.all(0.0),
                     icon: Icon(
-                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                      _isPlaying
+                          ? Icons.pause_circle_filled
+                          : Icons.play_circle_filled,
                       size: 48.0,
                     ),
                   ),
-                  Icon(
-                    Icons.forward_30,
-                    size: 48.0,
+                  IconButton(
+                    onPressed: () =>
+                        _player.seekToPlayer((_playPosition + 30000.0).toInt()),
+                    icon: Icon(
+                      Icons.forward_30,
+                      size: 48.0,
+                    ),
                   ),
                 ],
               ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );

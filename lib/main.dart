@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_sound/flutter_sound.dart';
-import 'dart:math';
 
 void main() => runApp(MyApp());
 
@@ -48,22 +51,18 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String patriceAudio = 'assets//ppatrice-were-better.mp3';
   bool _isPlaying = true;
   FlutterSound _sound;
   double _playPosition;
   StreamSubscription<PlayStatus> _playerSubscription;
-
-  void _togglePlay() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
-  }
 
   @override
   void initState() {
     super.initState();
     _sound = FlutterSound();
     _playPosition = 0;
+    SchedulerBinding.instance.addPostFrameCallback((_) => _play(patriceAudio));
   }
 
   @override
@@ -79,14 +78,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _stop() async {
-    await _sound.stopPlayer();
+    await _sound.pausePlayer();
     setState(() => _isPlaying = false);
   }
 
   void _play(String url) async {
     // todo: play the local patrice file
-    
-    await _sound.startPlayer(url);
+    ByteData localAudio = await rootBundle.load(url);
+    await _sound.startPlayerFromBuffer(localAudio.buffer.asUint8List());
     _playerSubscription = _sound.onPlayerStateChanged.listen((e) {
       if (e != null) {
         print(e.currentPosition);
@@ -120,12 +119,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (_isPlaying) {
                         _stop();
                       } else {
-                        _play('url');
+                        _play(patriceAudio);
                       }
                     },
                     padding: new EdgeInsets.all(0.0),
                     icon: Icon(
-                      _isPlaying ? Icons.play_circle_filled : Icons.pause_circle_filled,
+                      _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
                       size: 48.0,
                     ),
                   ),

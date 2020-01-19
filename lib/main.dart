@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'dart:math';
 
 void main() => runApp(MyApp());
@@ -46,6 +49,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
+  FlutterSound _sound;
+  double _playPosition;
+  StreamSubscription<PlayStatus> _playerSubscription;
 
   void _togglePlay() {
     setState(() {
@@ -54,11 +60,52 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _sound = FlutterSound();
+    _playPosition = 0;
+  }
+
+  @override
+  void dispose() {
+    // TODO cleanly clean things up. Since _cleanup is async, sometimes the _playerSubscription listener calls setState after dispose but before it's canceled.
+    _cleanup();
+    super.dispose();
+  }
+
+  void _cleanup() async {
+    await _sound.stopPlayer();
+    _playerSubscription.cancel();
+  }
+
+  void _stop() async {
+    await _sound.stopPlayer();
+    setState(() => _isPlaying = false);
+  }
+
+  void _play(String url) async {
+    // todo: play the local patrice file
+    
+    await _sound.startPlayer(url);
+    _playerSubscription = _sound.onPlayerStateChanged.listen((e) {
+      if (e != null) {
+        print(e.currentPosition);
+        setState(() => _playPosition = (e.currentPosition / e.duration));
+      }
+    });
+    setState(() => _isPlaying = true);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Column(
           children: <Widget>[
+            Slider(
+              value: _playPosition,
+              onChanged: null,
+            ),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -69,7 +116,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     size: 48.0,
                   ),
                   IconButton(
-                    onPressed: _togglePlay,
+                    onPressed: () {
+                      if (_isPlaying) {
+                        _stop();
+                      } else {
+                        _play('url');
+                      }
+                    },
                     padding: new EdgeInsets.all(0.0),
                     icon: Icon(
                       _isPlaying ? Icons.play_circle_filled : Icons.pause_circle_filled,

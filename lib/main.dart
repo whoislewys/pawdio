@@ -32,6 +32,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
   double _duration;
   double _playPosition;
+  String currentFileName = '';
+
+  void setCurrentFileName(String curFileName) {
+    currentFileName = curFileName;
+  }
 
   @override
   void initState() {
@@ -54,6 +59,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _chooseAndPlayFile() async {
     String chosenFilePath = await FilePicker.getFilePath();
+    print('chosenFilePath');
+    String filename = chosenFilePath.split('/').last;
+    print('filename: ');
+    setCurrentFileName(filename);
+    print('cur');
     await _audioPlayer.play(chosenFilePath, isLocal: true);
     _audioPlayer.onDurationChanged.listen((Duration d) {
       if (e != null) {
@@ -116,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Image.network(
                   'https://cmkt-image-prd.freetls.fastly.net/0.1.0/ps/442503/910/607/m1/fpnw/wm0/1501.m00.i124.n007.s.c10.227189671-sound-wave-background-.jpg?1428817606&s=539d7335bcd5c461d913f0e2417b2c08'),
-              Text('File Name'),
+              Text(currentFileName),
               Slider(
                 value: _playPosition,
                 min: 0.0,
@@ -139,7 +149,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (tenSecsBefore <= 0) {
                         _audioPlayer.seek(Duration(milliseconds: 0));
                       } else {
-                        _audioPlayer.seek(Duration(milliseconds: tenSecsBefore));
+                        _audioPlayer
+                            .seek(Duration(milliseconds: tenSecsBefore));
                       }
                     },
                     icon: Icon(

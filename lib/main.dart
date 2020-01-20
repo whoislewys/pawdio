@@ -99,7 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
     });
-    
+
     setState(() => _isPlaying = true);
   }
 
@@ -131,7 +131,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   setState(() {
                     print('slider changed to $value');
                     int msToSeekTo = value.toInt() - 100;
-                    // _player.seekToPlayer(msToSeekTo);
                     _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
                   });
                 },
@@ -143,8 +142,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int tenSecsBefore = (_playPosition - 10000.0).toInt();
-                      // _player.seekToPlayer(tenSecsBefore),
-
                       _audioPlayer.seek(Duration(milliseconds: tenSecsBefore));
                     },
                     icon: Icon(
@@ -172,8 +169,6 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
-                      // _player.seekToPlayer(thirtySecsFwd),
-
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
                     },
                     icon: Icon(

@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/widgets.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -12,8 +13,9 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    imageCache.clear();
     return MaterialApp(
-      title: 'Shit in my ass',
+      title: 'The best audio player in the world',
       home: MyHomePage(),
       theme: ThemeData.dark(),
     );
@@ -96,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    double albumArtSize = MediaQuery.of(context).size.width * 0.82;
     return Scaffold(
       body: Center(
         child: SafeArea(
@@ -106,12 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   IconButton(
                     icon: Icon(Icons.keyboard_arrow_down),
+                    iconSize: 48.0,
                     onPressed: () {
                       print('goback');
                     },
                   ),
                   PopupMenuButton(
-                    icon: Icon(Icons.more_vert),
+                    icon: Icon(Icons.more_vert, size: 34.0),
                     itemBuilder: (context) => [
                       PopupMenuItem(
                         value: 1,
@@ -124,10 +128,19 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-              Image.network(
-                  'https://cmkt-image-prd.freetls.fastly.net/0.1.0/ps/442503/910/607/m1/fpnw/wm0/1501.m00.i124.n007.s.c10.227189671-sound-wave-background-.jpg?1428817606&s=539d7335bcd5c461d913f0e2417b2c08'),
-              Text(currentFileName),
+              Container(
+                width: albumArtSize,
+                child: Image.asset('assets/no-art-found.png'),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 28.0, 10.0, 10.0),
+                child: Text(
+                  currentFileName,
+                  textScaleFactor: 1.27,
+                ),
+              ),
               Slider(
+                activeColor: Colors.white,
                 value: _playPosition,
                 min: 0.0,
                 max: _duration,

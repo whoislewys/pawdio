@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:sqflite/sqflite.dart';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
@@ -90,15 +91,26 @@ class _MyHomePageState extends State<MyHomePage> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              PopupMenuButton(
-                icon: Icon(Icons.more_vert),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 1,
-                    child: ListTile(
-                      title: Text('Choose File'),
-                      onTap: _chooseAndPlayFile,
-                    ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.keyboard_arrow_down),
+                    onPressed: () {
+                      print('goback');
+                    },
+                  ),
+                  PopupMenuButton(
+                    icon: Icon(Icons.more_vert),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 1,
+                        child: ListTile(
+                          title: Text('Choose File'),
+                          onTap: _chooseAndPlayFile,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -117,17 +129,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
               ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   IconButton(
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int tenSecsBefore = (_playPosition - 10000.0).toInt();
-                      _audioPlayer.seek(Duration(milliseconds: tenSecsBefore));
+                      print('tensecsbefore: $tenSecsBefore');
+                      if (tenSecsBefore <= 0) {
+                        _audioPlayer.seek(Duration(milliseconds: 0));
+                      } else {
+                        _audioPlayer.seek(Duration(milliseconds: tenSecsBefore));
+                      }
                     },
                     icon: Icon(
                       Icons.forward_10,
-                      size: 48.0,
+                      size: 40.0,
                     ),
                   ),
                   IconButton(
@@ -154,10 +171,68 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                     icon: Icon(
                       Icons.forward_30,
-                      size: 48.0,
+                      size: 40.0,
                     ),
                   ),
                 ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('make a note');
+                      },
+                      icon: Icon(
+                        Icons.note_add,
+                        size: 36.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('prev bookmark');
+                      },
+                      icon: Icon(
+                        Icons.chevron_left,
+                        size: 40.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('bookmarked!');
+                      },
+                      icon: Icon(
+                        Icons.bookmark_border,
+                        size: 44.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('next bkmrk');
+                      },
+                      icon: Icon(
+                        Icons.chevron_right,
+                        size: 40.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('sleep timer');
+                      },
+                      icon: Icon(
+                        Icons.timer,
+                        size: 36.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

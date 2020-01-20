@@ -31,7 +31,6 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
   double _duration;
   double _playPosition;
-  String patriceAudio = 'assets/patrice-were-better.mp3';
 
   @override
   void initState() {
@@ -39,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    SchedulerBinding.instance.addPostFrameCallback((_) => chooseAndPlayFile());
+    SchedulerBinding.instance.addPostFrameCallback((_) => _chooseAndPlayFile());
   }
 
   @override
@@ -52,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
     await _audioPlayer.stop();
   }
 
-  void chooseAndPlayFile() async {
+  void _chooseAndPlayFile() async {
     String chosenFilePath = await FilePicker.getFilePath();
     await _audioPlayer.play(chosenFilePath, isLocal: true);
     _audioPlayer.onDurationChanged.listen((Duration d) {
@@ -74,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() => _isPlaying = true);
   }
 
-  void _play(String url) async {
+  void _resume() async {
     await _audioPlayer.resume();
     setState(() => _isPlaying = true);
   }
@@ -91,6 +90,18 @@ class _MyHomePageState extends State<MyHomePage> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
+              PopupMenuButton(
+                icon: Icon(Icons.more_vert),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 1,
+                    child: ListTile(
+                      title: Text('Choose File'),
+                      onTap: _chooseAndPlayFile,
+                    ),
+                  ),
+                ],
+              ),
               Image.network(
                   'https://cmkt-image-prd.freetls.fastly.net/0.1.0/ps/442503/910/607/m1/fpnw/wm0/1501.m00.i124.n007.s.c10.227189671-sound-wave-background-.jpg?1428817606&s=539d7335bcd5c461d913f0e2417b2c08'),
               Text('File Name'),
@@ -125,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       if (_isPlaying) {
                         _stop();
                       } else {
-                        _play(patriceAudio);
+                        _resume();
                       }
                     },
                     icon: Icon(

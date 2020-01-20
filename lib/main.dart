@@ -100,7 +100,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 max: _duration,
                 onChanged: (double value) {
                   setState(() {
-                    print('slider changed to $value');
                     int msToSeekTo = value.toInt() - 100;
                     _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
                   });

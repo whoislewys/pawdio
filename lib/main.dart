@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/widgets.dart';
+import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'package:audioplayers/audioplayers.dart';
@@ -34,6 +35,7 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isPlaying = true;
   double _duration;
   double _playPosition;
+  Database _database;
   String currentFileName = '';
 
   void setCurrentFileName(String curFileName) {
@@ -46,7 +48,11 @@ class _MyHomePageState extends State<MyHomePage> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    SchedulerBinding.instance.addPostFrameCallback((_) => _chooseAndPlayFile());
+
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      _chooseAndPlayFile();
+      _setupDB();
+    });
   }
 
   @override
@@ -59,13 +65,24 @@ class _MyHomePageState extends State<MyHomePage> {
     await _audioPlayer.stop();
   }
 
-  void _chooseAndPlayFile() async {
+  Future<bool> _checkIfFileExistsInDb(String filePath) async {
+    List<Map<String, dynamic>> res = await _database.query('Audios',
+        distinct: true, columns: ['file_path'], where: 'file_path=$filePath');
+    if (res.first != null) {
+      print('query res not empty: $res');
+      return true;
+    }
+    print('this bitch ass query empty. yeet: $res');
+    return false;
+  }
+
+  Future<void> _chooseAndPlayFile() async {
+    // Open file manager and choose file
     String chosenFilePath = await FilePicker.getFilePath();
-    print('chosenFilePath');
-    String filename = chosenFilePath.split('/').last;
-    print('filename: ');
-    setCurrentFileName(filename);
-    print('cur');
+    String chosenFilename = chosenFilePath.split('/').last;
+    setCurrentFileName(chosenFilename);
+
+    // Play chosen file and setup listeners on player
     await _audioPlayer.play(chosenFilePath, isLocal: true);
     _audioPlayer.onDurationChanged.listen((Duration d) {
       if (e != null) {
@@ -74,7 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
     });
-
     _audioPlayer.onAudioPositionChanged.listen((Duration d) {
       if (e != null) {
         setState(() {
@@ -83,10 +99,32 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     });
 
+    // if file has been chosen before, query for and play from the last position
+    bool fileHasBeenChosenBefore = await _checkIfFileExistsInDb(chosenFilename);
+    if (fileHasBeenChosenBefore) {
+      print('file chosen before. should query for last position, play, and seek to it here');
+    } else {
+      // if file has not been chosen before, create record for it in DB
+      await _database
+        .insert('Audios', {'file_path:': chosenFilePath, 'last_position': 0});
+    }
+
     setState(() => _isPlaying = true);
   }
 
-  void _resume() async {
+  Future<void> _setupDB() async {
+    var databasesPath = await getDatabasesPath();
+    String path = join(databasesPath, 'pawdio-library.db');
+
+    _database = await openDatabase(path, version: 1,
+        onCreate: (Database db, int version) async {
+      await db.execute(
+          // todo: add tables for bookmarks & notes, and foreign keys to them in the the audio table
+          'CREATE TABLE Audios (id INTEGER AUTOINCREMENT PRIMARY KEY UNIQUE, file_path TEXT, last_position INTEGER)');
+    });
+  }
+
+  Future<void> _resume() async {
     await _audioPlayer.resume();
     setState(() => _isPlaying = true);
   }

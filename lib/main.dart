@@ -65,19 +65,16 @@ class _MyHomePageState extends State<MyHomePage> {
     await _audioPlayer.stop();
   }
 
-  Future<bool> _checkIfFileExistsInDb(String filePath) async {
+  Future<List<Map<String, dynamic>>> queryAudioForFilePath(String filePath) async {
     try {
       List<Map<String, dynamic>> res = await _database
           .rawQuery('SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
-      print('select filepath res: $res');
-      if (res != []) {
-        return true;
-      }
+      print('select filepath result: $res');
+      return res;
     } catch (e) {
       print('this bitch ass query empty yeet. error: $e');
-      return false;
+      return [];
     }
-    return false;
   }
 
   Future<void> _chooseAndPlayFile() async {
@@ -104,7 +101,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    bool fileHasBeenChosenBefore = await _checkIfFileExistsInDb(chosenFilePath);
+    List<Map<String, dynamic>> res = await queryAudioForFilePath(chosenFilePath);
+    bool fileHasBeenChosenBefore = res != [];
     if (fileHasBeenChosenBefore) {
       print(
           'file chosen before. should query for last position, play, and seek to it here');
@@ -114,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
         'file_path': chosenFilePath,
         'last_position': 0
       };
-      print('inserting row $row into db');
       await _database.insert('Audios', row);
     }
 

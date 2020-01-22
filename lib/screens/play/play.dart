@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:pawdio/utils/life_cycle_event_handler.dart';
 
 class Player extends StatefulWidget {
   Player({Key key}) : super(key: key);
@@ -43,7 +43,11 @@ class _PlayerState extends State<Player> {
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
-    // WidgetsBinding.instance.addObserver()
+    WidgetsBinding.instance.addObserver(WidgetsBindingObserver LifecycleEventHandler(
+        suspendingCallBack: () async => widget.appController.persistState(),
+        resumeCallBack: () async {
+          _log.finest('resume...');
+        }));
   }
 
   @override
@@ -82,7 +86,7 @@ class _PlayerState extends State<Player> {
     // if file has been chosen before, query for and play from the last position
     List<Map<String, dynamic>> res =
         await _database.queryAudioForFilePath(chosenFilePath);
-        print('audio query for filepath $chosenFilePath result: $res');
+    print('audio query for filepath $chosenFilePath result: $res');
     if (res.isNotEmpty) {
       print(
           'file chosen before. should query for last position, play, and seek to it here');

@@ -77,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
       print('this bitch ass query empty yeet. error: $e');
       return false;
     }
+    return false;
   }
 
   Future<void> _chooseAndPlayFile() async {

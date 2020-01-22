@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -68,17 +67,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<bool> _checkIfFileExistsInDb(String filePath) async {
     try {
-      List<Map<String, dynamic>> res = await _database.query('Audios',
-          distinct: true, columns: ['file_path'], where: 'file_path=$filePath');
-      if (res.first != null) {
-        print('query res not empty: $res');
+      List<Map<String, dynamic>> res = await _database
+          .rawQuery('SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
+      print('select filepath res: $res');
+      if (res != []) {
         return true;
       }
     } catch (e) {
-      print('this bitch ass query empty. yeeting error: $e');
+      print('this bitch ass query empty yeet. error: $e');
       return false;
     }
-    return false;
   }
 
   Future<void> _chooseAndPlayFile() async {
@@ -105,15 +103,18 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    bool fileHasBeenChosenBefore = await _checkIfFileExistsInDb(chosenFilename);
+    bool fileHasBeenChosenBefore = await _checkIfFileExistsInDb(chosenFilePath);
     if (fileHasBeenChosenBefore) {
       print(
           'file chosen before. should query for last position, play, and seek to it here');
     } else {
       // if file has not been chosen before, create record for it in DB
-      Map<String, dynamic> row = {'file_path': chosenFilePath, 'last_position': 0};
-      await _database
-          .insert('Audios', row);
+      Map<String, dynamic> row = {
+        'file_path': chosenFilePath,
+        'last_position': 0
+      };
+      print('inserting row $row into db');
+      await _database.insert('Audios', row);
     }
 
     setState(() => _isPlaying = true);
@@ -121,11 +122,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _setupDB() async {
     var databasesPath = await getDatabasesPath();
-    print('db path: $databasesPath');
     String path = join(databasesPath, 'pawdio-library.db');
-    print('db filepath: $path');
-    // var dir = Directory(path);
-    // dir.deleteSync();
+    // deleteDatabase(path);
 
     _database = await openDatabase(path, version: 1,
         onCreate: (Database db, int version) async {
@@ -133,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
       await db.execute(
           // todo: add tables for bookmarks & notes, and foreign keys to them in the the audio table
           // supposedly i get a autoincrementing rowid for free from sqlite
-          'CREATE TABLE Audios (file_path TEXT, last_position INTEGER)');
+          'CREATE TABLE Audios (file_path TEXT UNIQUE, last_position INTEGER)');
     });
   }
 

@@ -65,10 +65,13 @@ class _MyHomePageState extends State<MyHomePage> {
     await _audioPlayer.stop();
   }
 
-  Future<List<Map<String, dynamic>>> queryAudioForFilePath(String filePath) async {
+  Future<List<Map<String, dynamic>>> queryAudioForFilePath(
+      String filePath) async {
     try {
-      List<Map<String, dynamic>> res = await _database
-          .rawQuery('SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
+      List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
+        return ctx.rawQuery(
+            'SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
+      });
       print('select filepath result: $res');
       return res;
     } catch (e) {
@@ -101,7 +104,8 @@ class _MyHomePageState extends State<MyHomePage> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    List<Map<String, dynamic>> res = await queryAudioForFilePath(chosenFilePath);
+    List<Map<String, dynamic>> res =
+        await queryAudioForFilePath(chosenFilePath);
     bool fileHasBeenChosenBefore = res != [];
     if (fileHasBeenChosenBefore) {
       print(
@@ -112,7 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
         'file_path': chosenFilePath,
         'last_position': 0
       };
-      await _database.insert('Audios', row);
+      await _database.transaction((ctx) async {
+        await ctx.insert('Audios', row);
+      });
     }
 
     setState(() => _isPlaying = true);
@@ -128,7 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
       print('creating db');
       await db.execute(
           // todo: add tables for bookmarks & notes, and foreign keys to them in the the audio table
-          // supposedly i get a autoincrementing rowid for free from sqlite
           'CREATE TABLE Audios (file_path TEXT UNIQUE, last_position INTEGER)');
     });
   }

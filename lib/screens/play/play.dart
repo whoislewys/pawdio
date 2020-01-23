@@ -8,24 +8,21 @@ import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 
-class Player extends StatefulWidget {
-  Player({Key key}) : super(key: key);
+class Playscreen extends StatefulWidget {
+  Playscreen({Key key}) : super(key: key);
 
   @override
-  _PlayerState createState() => _PlayerState();
+  _PlayscreenState createState() => _PlayscreenState();
 }
 
-class _PlayerState extends State<Player> {
+class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
   bool _isPlaying = true;
   double _duration;
   double _playPosition;
   PawdioDb _database;
-  String currentFileName = '';
-
-  void setCurrentFileName(String curFileName) {
-    currentFileName = curFileName;
-  }
+  String _currentFilename = '';
+  String _currentFilePath;
 
   @override
   void initState() {
@@ -43,11 +40,9 @@ class _PlayerState extends State<Player> {
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
-    WidgetsBinding.instance.addObserver(WidgetsBindingObserver LifecycleEventHandler(
-        suspendingCallBack: () async => widget.appController.persistState(),
-        resumeCallBack: () async {
-          _log.finest('resume...');
-        }));
+    WidgetsBinding.instance.addObserver(LifecycleEventHandler(
+        inactiveCallback: () => _database.updateLastPosition(_currentFilePath, _playPosition.toInt())
+    ));
   }
 
   @override
@@ -62,12 +57,11 @@ class _PlayerState extends State<Player> {
 
   Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
-    String chosenFilePath = await FilePicker.getFilePath();
-    String chosenFilename = chosenFilePath.split('/').last;
-    setCurrentFileName(chosenFilename);
+    _currentFilePath = await FilePicker.getFilePath();
+    _currentFilename = _currentFilePath.split('/').last;
 
     // Play chosen file and setup listeners on player
-    await _audioPlayer.play(chosenFilePath, isLocal: true);
+    await _audioPlayer.play(_currentFilePath, isLocal: true);
     _audioPlayer.onDurationChanged.listen((Duration d) {
       if (e != null) {
         setState(() {
@@ -85,14 +79,13 @@ class _PlayerState extends State<Player> {
 
     // if file has been chosen before, query for and play from the last position
     List<Map<String, dynamic>> res =
-        await _database.queryAudioForFilePath(chosenFilePath);
-    print('audio query for filepath $chosenFilePath result: $res');
+        await _database.queryAudioForFilePath(_currentFilePath);
     if (res.isNotEmpty) {
       print(
           'file chosen before. should query for last position, play, and seek to it here');
     } else {
       // if file has not been chosen before, create record for it in DB
-      _database.createAudio(chosenFilePath);
+      _database.createAudio(_currentFilePath);
     }
 
     setState(() => _isPlaying = true);
@@ -126,18 +119,6 @@ class _PlayerState extends State<Player> {
                       print('goback');
                     },
                   ),
-                  PopupMenuButton(
-                    icon: Icon(Icons.more_vert, size: 34.0),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 1,
-                        child: ListTile(
-                          title: Text('Choose File'),
-                          onTap: _chooseAndPlayFile,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
               Container(
@@ -147,7 +128,7 @@ class _PlayerState extends State<Player> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(10.0, 28.0, 10.0, 10.0),
                 child: Text(
-                  currentFileName,
+                  _currentFilename,
                   textScaleFactor: 1.27,
                 ),
               ),

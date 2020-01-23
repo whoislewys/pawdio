@@ -40,19 +40,11 @@ class PawdioDb {
 
   Future<List<Map<String, dynamic>>> queryAudioForFilePath(
       String filePath) async {
-    print('\n****Querying for filepath****\n');
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
         return ctx.rawQuery(
             'SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
       });
-      print('select filepath result: $res');
-
-      List<Map<String, dynamic>> res2 = await _database.transaction((ctx) async {
-        return ctx.rawQuery(
-            'SELECT file_path FROM Audios');
-      });
-      print('select ALL filepaths result: $res2');
       return res;
     } catch (e) {
       print('this bitch ass query empty yeet. error: $e');
@@ -60,15 +52,27 @@ class PawdioDb {
     }
   }
 
-  Future<void> createAudio(chosenFilePath) async {
+  Future<void> createAudio(filePath) async {
     print('Inserting!');
     Map<String, dynamic> row = {
-      'file_path': chosenFilePath,
+      'file_path': filePath,
       'last_position': 0,
     };
 
     await _database.transaction((ctx) async {
       await ctx.insert('Audios', row);
     });
+  }
+
+  Future<void> updateLastPosition(String filePath, int newPlayPosition) async {
+    try {
+      await _database.transaction((ctx) async {
+        await ctx.rawUpdate(
+            'UPDATE Audios SET last_position=? WHERE file_path=?',
+            [newPlayPosition, filePath]);
+      });
+    } catch (e) {
+      print('woopsie poopsie, update failed. quietly failing');
+    }
   }
 }

@@ -43,7 +43,7 @@ class PawdioDb {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
         return ctx.rawQuery(
-            'SELECT file_path FROM Audios WHERE file_path=(?)', [filePath]);
+            'SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
       });
       return res;
     } catch (e) {

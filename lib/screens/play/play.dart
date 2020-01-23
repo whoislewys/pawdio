@@ -41,8 +41,8 @@ class _PlayscreenState extends State<Playscreen> {
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-        inactiveCallback: () => _database.updateLastPosition(_currentFilePath, _playPosition.toInt())
-    ));
+        inactiveCallback: () => _database.updateLastPosition(
+            _currentFilePath, _playPosition.toInt())));
   }
 
   @override
@@ -78,11 +78,15 @@ class _PlayscreenState extends State<Playscreen> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    List<Map<String, dynamic>> res =
+    List<Map<String, dynamic>> audioResult =
         await _database.queryAudioForFilePath(_currentFilePath);
-    if (res.isNotEmpty) {
+    if (audioResult.isNotEmpty) {
       print(
           'file chosen before. should query for last position, play, and seek to it here');
+      int previousPosition = audioResult.first['last_position'];
+      print('audio res first ${audioResult.first}');
+      print('last position $previousPosition');
+      _audioPlayer.seek(Duration(milliseconds: previousPosition));
     } else {
       // if file has not been chosen before, create record for it in DB
       _database.createAudio(_currentFilePath);
@@ -118,6 +122,18 @@ class _PlayscreenState extends State<Playscreen> {
                     onPressed: () {
                       print('goback');
                     },
+                  ),
+                  PopupMenuButton(
+                    icon: Icon(Icons.more_vert, size: 34.0),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 1,
+                        child: ListTile(
+                          title: Text('Choose File'),
+                          onTap: _chooseAndPlayFile,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

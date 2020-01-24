@@ -148,15 +148,20 @@ class _PlayscreenState extends State<Playscreen> {
                   textScaleFactor: 1.27,
                 ),
               ),
+              //todo: use slidertheme to make the label visible
+              // and to make the valueindicator show up for non discrete? or maybe just add n seconds of divisions
               Slider(
                 activeColor: Colors.white,
                 value: _playPosition,
                 min: 0.0,
                 max: _duration,
+                divisions: 40,
+                label: 'yo',
                 onChanged: (double value) {
                   setState(() {
                     int msToSeekTo = value.toInt() - 100;
                     _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
+                    // print('Playposition:  $_playPosition');
                   });
                 },
               ),

@@ -2,20 +2,21 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PawdioDb {
-  Future<void> _dbInitalization;
   static final _databaseName = 'PawdioDatabase.db';
   static final _databaseVersion = 1;
-  static Database _database;
+  Database _database;
 
   // Singleton pattern using private constructor so only one PawdioDb exists throughout whole app
   PawdioDb._privateConstructor() {
-    _dbInitalization = setupDb();
+    print(' private constructor ');
   }
-  Future<void> get dbInitialization => _dbInitalization;
-  static final PawdioDb _instance = PawdioDb._privateConstructor();
-  static PawdioDb get instance { return _instance; }
+  static Future<PawdioDb> create() async {
+    PawdioDb pawdioDb = PawdioDb._privateConstructor();
+    await pawdioDb.setupDb();
+    return pawdioDb;
+  }
 
-  static Future<void> setupDb() async {
+  Future<void> setupDb() async {
     if (_database != null) {
       // ensure that setup only gets called once
       return;

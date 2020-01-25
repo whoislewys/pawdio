@@ -32,9 +32,8 @@ class _PlayscreenState extends State<Playscreen> {
     _playPosition = 0.0;
     _duration = 0.0;
 
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      _database = PawdioDb.instance;
-      // _database.deleteDB();
+    SchedulerBinding.instance.addPostFrameCallback((_) async {
+      _database = await PawdioDb.create();
       _chooseAndPlayFile();
     });
 
@@ -113,6 +112,9 @@ class _PlayscreenState extends State<Playscreen> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
+              Text(
+
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

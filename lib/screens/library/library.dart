@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
 
 class LibraryScreen extends StatefulWidget {
@@ -12,16 +13,19 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  Future<List<Map<String, dynamic>>> _audios;
+  List<Map<String, dynamic>> _audios;
   PawdioDb _database;
 
   @override
   void initState() {
     super.initState();
+    _hydrateAudio();
+  }
 
-    if (_database == null) {
-      _database = PawdioDb.instance;
-    }
+  Future<void> _hydrateAudio() async {
+    _database = await PawdioDb.create();
+    _audios = await _database.getAllAudios();
+    return;
   }
 
   Future<void> _chooseAndPlayFile() async {
@@ -37,6 +41,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
+              Text('Library'),
               PopupMenuButton(
                 icon: Icon(Icons.more_vert, size: 34.0),
                 itemBuilder: (context) => [
@@ -49,26 +54,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ],
               ),
-              // FutureBuilder(
-              //   future: _audios,
-              //   builder: (context, snapshot) {
-              //     if (snapshot.connectionState == ConnectionState.done) {
-              //       List<Map<String, dynamic>> resolvedAudios = snapshot.data;
-              //       return ListView.builder(
-              //         itemCount: resolvedAudios.length,
-              //         itemBuilder: (ctx, idx) {
-              //           final resolvedAudio = resolvedAudios[idx];
-              //           print('resolvedaudio: $resolvedAudios');
-              //           return ListTile(
-              //             title: Text(getFileNameFromFilePath(resolvedAudio['file_path'])),
-              //           );
-              //         },
-              //         );
-              //     } else {
-              //       return CircularProgressIndicator();
-              //     }
-              //   }
-              // ),
+              FutureBuilder(
+                  future: _hydrateAudio(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _audios.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return ListTile(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => Playscreen())),
+                            title: Text(
+                              getFileNameFromFilePath(
+                                  _audios[index]['file_path']),
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  }),
             ],
           ),
         ),

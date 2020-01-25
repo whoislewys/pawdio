@@ -1,6 +1,8 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/utils/util.dart';
 
 class LibraryScreen extends StatefulWidget {
   LibraryScreen({Key key}) : super(key: key);
@@ -10,31 +12,67 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
+  Future<List<Map<String, dynamic>>> _audios;
+  PawdioDb _database;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (_database == null) {
+      _database = PawdioDb.instance;
+    }
+  }
+
   Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
     var chosenFile = await FilePicker.getFilePath();
+    // todo:  navigate to play screen
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Center(
-            child: SafeArea(
-                child: Column(
-      children: <Widget>[
-        PopupMenuButton(
-          icon: Icon(Icons.more_vert, size: 34.0),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 1,
-              child: ListTile(
-                title: Text('Choose File'),
-                onTap: _chooseAndPlayFile,
+      body: Center(
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              PopupMenuButton(
+                icon: Icon(Icons.more_vert, size: 34.0),
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 1,
+                    child: ListTile(
+                      title: Text('Choose File'),
+                      onTap: _chooseAndPlayFile,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              // FutureBuilder(
+              //   future: _audios,
+              //   builder: (context, snapshot) {
+              //     if (snapshot.connectionState == ConnectionState.done) {
+              //       List<Map<String, dynamic>> resolvedAudios = snapshot.data;
+              //       return ListView.builder(
+              //         itemCount: resolvedAudios.length,
+              //         itemBuilder: (ctx, idx) {
+              //           final resolvedAudio = resolvedAudios[idx];
+              //           print('resolvedaudio: $resolvedAudios');
+              //           return ListTile(
+              //             title: Text(getFileNameFromFilePath(resolvedAudio['file_path'])),
+              //           );
+              //         },
+              //         );
+              //     } else {
+              //       return CircularProgressIndicator();
+              //     }
+              //   }
+              // ),
+            ],
+          ),
         ),
-      ],
-    ))));
+      ),
+    );
   }
 }

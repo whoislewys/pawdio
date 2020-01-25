@@ -7,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
+import 'package:pawdio/utils/util.dart';
 
 class Playscreen extends StatefulWidget {
   Playscreen({Key key}) : super(key: key);
@@ -32,8 +33,7 @@ class _PlayscreenState extends State<Playscreen> {
     _duration = 0.0;
 
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      _database = PawdioDb();
-      PawdioDb.setupDb();
+      _database = PawdioDb.instance;
       // _database.deleteDB();
       _chooseAndPlayFile();
     });
@@ -58,7 +58,7 @@ class _PlayscreenState extends State<Playscreen> {
   Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
     _currentFilePath = await FilePicker.getFilePath();
-    _currentFilename = _currentFilePath.split('/').last;
+    _currentFilename = getFileNameFromFilePath(_currentFilePath);
 
     // Play chosen file and setup listeners on player
     await _audioPlayer.play(_currentFilePath, isLocal: true);
@@ -148,7 +148,7 @@ class _PlayscreenState extends State<Playscreen> {
                   textScaleFactor: 1.27,
                 ),
               ),
-              // apply slidertheme to make slider label black so it's visible
+              // apply slidertheme to make slider label black so it's visible (with dark theme it's white by default)
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   showValueIndicator: ShowValueIndicator.onlyForContinuous,
@@ -159,12 +159,11 @@ class _PlayscreenState extends State<Playscreen> {
                   value: _playPosition,
                   min: 0.0,
                   max: _duration,
-                  label: _playPosition.toString(),
+                  label: millisecondsToMinutesAndSeconds(_playPosition),
                   onChanged: (double value) {
                     setState(() {
                       int msToSeekTo = value.toInt() - 100;
                       _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
-                      // print('Playposition:  $_playPosition');
                     });
                   },
                 ),

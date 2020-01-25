@@ -2,12 +2,25 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PawdioDb {
+  Future<void> _dbInitalization;
   static final _databaseName = 'PawdioDatabase.db';
   static final _databaseVersion = 1;
-
   static Database _database;
 
+  // Singleton pattern using private constructor so only one PawdioDb exists throughout whole app
+  PawdioDb._privateConstructor() {
+    _dbInitalization = setupDb();
+  }
+  Future<void> get dbInitialization => _dbInitalization;
+  static final PawdioDb _instance = PawdioDb._privateConstructor();
+  static PawdioDb get instance { return _instance; }
+
   static Future<void> setupDb() async {
+    if (_database != null) {
+      // ensure that setup only gets called once
+      return;
+    }
+
     print('\n****Setting up DB****\n');
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, _databaseName);
@@ -19,6 +32,7 @@ class PawdioDb {
           // TODO: Create tables for bookmarks & notes, and foreign keys to them in the the audio table
           'CREATE TABLE Audios (file_path TEXT UNIQUE, last_position INTEGER)');
     });
+    print('***** DB SETUP COMPLETE ! *****');
   }
 
   Future<void> deleteDB() async {
@@ -52,6 +66,19 @@ class PawdioDb {
     }
   }
 
+  Future<List<Map<String, dynamic>>> getAllAudios() async {
+    try {
+      List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
+        return ctx.rawQuery(
+            'SELECT * FROM Audios');
+      });
+      return res;
+    } catch (e) {
+      print('Error getting all audios. error: $e');
+      return [];
+    }
+  }
+
   Future<void> createAudio(filePath) async {
     print('Inserting!');
     Map<String, dynamic> row = {
@@ -75,4 +102,5 @@ class PawdioDb {
       print('woopsie poopsie, update failed. quietly failing');
     }
   }
+
 }

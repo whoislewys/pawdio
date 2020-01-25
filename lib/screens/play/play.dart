@@ -112,9 +112,6 @@ class _PlayscreenState extends State<Playscreen> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              Text(
-
-              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

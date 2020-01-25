@@ -138,7 +138,10 @@ class _PlayscreenState extends State<Playscreen> {
               ),
               Container(
                 width: albumArtSize,
-                child: Image.asset('assets/no-art-found.png'),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular((5.0)),
+                  child: Image.asset('assets/no-art-found.png'),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(10.0, 28.0, 10.0, 10.0),

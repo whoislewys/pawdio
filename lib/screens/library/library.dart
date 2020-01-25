@@ -41,7 +41,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              Text('Library'),
               PopupMenuButton(
                 icon: Icon(Icons.more_vert, size: 34.0),
                 itemBuilder: (context) => [
@@ -53,6 +52,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ),
                   ),
                 ],
+              ),
+              Text(
+                'Library',
+                textScaleFactor: 1.5,
               ),
               FutureBuilder(
                   future: _hydrateAudio(),

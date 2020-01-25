@@ -55,7 +55,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               Text(
                 'Library',
-                textScaleFactor: 1.5,
+                style: Theme.of(context).textTheme.title,
               ),
               FutureBuilder(
                   future: _hydrateAudio(),
@@ -66,7 +66,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         itemCount: _audios.length,
                         itemBuilder: (BuildContext context, int index) {
                           return ListTile(
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => Playscreen())),
+                            onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => Playscreen())),
                             title: Text(
                               getFileNameFromFilePath(
                                   _audios[index]['file_path']),

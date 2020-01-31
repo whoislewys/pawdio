@@ -5,14 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
-import 'package:pawdio/blocs/bloc_provider.dart';
-import 'package:pawdio/blocs/current_file_path_bloc.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 import 'package:pawdio/utils/util.dart';
 
 class Playscreen extends StatefulWidget {
-  Playscreen({Key key}) : super(key: key);
+  final String currentFilePath;
+  // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
+  Playscreen({Key key, @required this.currentFilePath}) : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -33,6 +33,7 @@ class _PlayscreenState extends State<Playscreen> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
+    _currentFilePath = widget.currentFilePath;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
@@ -44,6 +45,8 @@ class _PlayscreenState extends State<Playscreen> {
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
         inactiveCallback: () => _database.updateLastPosition(
             _currentFilePath, _playPosition.toInt())));
+    print('current filepath: $_currentFilePath');
+    _playFile(_currentFilePath);
   }
 
   @override
@@ -63,11 +66,6 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   Future<void> _playFile(String filePath) async {
-    // if already playing, don't allow to play again
-    if (_isPlaying) {
-      return;
-    }
-
     // set title to show in media player
     title = getFileNameFromFilePath(filePath);
 
@@ -104,7 +102,6 @@ class _PlayscreenState extends State<Playscreen> {
     }
 
     setState(() => _isPlaying = true);
-
   }
 
   Future<void> _resume() async {
@@ -113,6 +110,7 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   void _stop() async {
+    print('pausing');
     await _audioPlayer.pause();
     setState(() => _isPlaying = false);
   }
@@ -120,192 +118,180 @@ class _PlayscreenState extends State<Playscreen> {
   @override
   Widget build(BuildContext context) {
     double albumArtSize = MediaQuery.of(context).size.width * 0.82;
-
-    return StreamBuilder<String>(
-      stream: BlocProvider.of<CurrentFilePathBloc>(context).filePathStream,
-      builder: (context, snapshot) {
-        final currentFilePath = snapshot.data;
-        print('current file path from bloc: $currentFilePath');
-        if (currentFilePath == null) {
-          return Container();
-        }
-        _playFile(currentFilePath);
-        return Scaffold(
-          body: Center(
-            child: SafeArea(
-              child: Column(
-                children: <Widget>[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.keyboard_arrow_down),
-                        iconSize: 48.0,
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                      ),
-                      PopupMenuButton(
-                        icon: Icon(Icons.more_vert, size: 34.0),
-                        itemBuilder: (context) => [
-                          PopupMenuItem(
-                            value: 1,
-                            child: ListTile(
-                              title: Text('Choose File'),
-                              onTap: _chooseAndPlayFile,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+    return Scaffold(
+      body: Center(
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.keyboard_arrow_down),
+                    iconSize: 48.0,
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
-                  Container(
-                    width: albumArtSize,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular((5.0)),
-                      child: Image.asset('assets/no-art-found.png'),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10.0, 28.0, 10.0, 10.0),
-                    child: Text(
-                      title,
-                      textScaleFactor: 1.27,
-                    ),
-                  ),
-                  // apply slidertheme to make slider label black so it's visible (with dark theme it's white by default)
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      showValueIndicator: ShowValueIndicator.onlyForContinuous,
-                      valueIndicatorTextStyle: TextStyle(color: Colors.black),
-                    ),
-                    child: Slider(
-                      activeColor: Colors.white,
-                      value: _playPosition,
-                      min: 0.0,
-                      max: _duration,
-                      label: millisecondsToMinutesAndSeconds(_playPosition),
-                      onChanged: (double value) {
-                        setState(() {
-                          int msToSeekTo = value.toInt() - 100;
-                          _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
-                        });
-                      },
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton(
-                        padding: new EdgeInsets.all(0.0),
-                        onPressed: () {
-                          int tenSecsBefore = (_playPosition - 10000.0).toInt();
-                          print('tensecsbefore: $tenSecsBefore');
-                          if (tenSecsBefore <= 0) {
-                            _audioPlayer.seek(Duration(milliseconds: 0));
-                          } else {
-                            _audioPlayer
-                                .seek(Duration(milliseconds: tenSecsBefore));
-                          }
-                        },
-                        icon: Icon(
-                          Icons.forward_10,
-                          size: 40.0,
-                        ),
-                      ),
-                      IconButton(
-                        padding: new EdgeInsets.all(0.0),
-                        onPressed: () {
-                          if (_isPlaying) {
-                            _stop();
-                          } else {
-                            _resume();
-                          }
-                        },
-                        icon: Icon(
-                          _isPlaying
-                              ? Icons.pause_circle_filled
-                              : Icons.play_circle_filled,
-                          size: 48.0,
-                        ),
-                      ),
-                      IconButton(
-                        padding: new EdgeInsets.all(0.0),
-                        onPressed: () {
-                          int thirtySecsFwd = (_playPosition + 30000.0).toInt();
-                          _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
-                        },
-                        icon: Icon(
-                          Icons.forward_30,
-                          size: 40.0,
+                  PopupMenuButton(
+                    icon: Icon(Icons.more_vert, size: 34.0),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 1,
+                        child: ListTile(
+                          title: Text('Choose File'),
+                          onTap: _chooseAndPlayFile,
                         ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                          padding: new EdgeInsets.all(0.0),
-                          onPressed: () {
-                            print('make a note');
-                          },
-                          icon: Icon(
-                            Icons.note_add,
-                            size: 36.0,
-                          ),
-                        ),
-                        IconButton(
-                          padding: new EdgeInsets.all(0.0),
-                          onPressed: () {
-                            print('prev bookmark');
-                          },
-                          icon: Icon(
-                            Icons.chevron_left,
-                            size: 40.0,
-                          ),
-                        ),
-                        IconButton(
-                          padding: new EdgeInsets.all(0.0),
-                          onPressed: () {
-                            print('bookmarked!');
-                          },
-                          icon: Icon(
-                            Icons.bookmark_border,
-                            size: 44.0,
-                          ),
-                        ),
-                        IconButton(
-                          padding: new EdgeInsets.all(0.0),
-                          onPressed: () {
-                            print('next bkmrk');
-                          },
-                          icon: Icon(
-                            Icons.chevron_right,
-                            size: 40.0,
-                          ),
-                        ),
-                        IconButton(
-                          padding: new EdgeInsets.all(0.0),
-                          onPressed: () {
-                            print('sleep timer');
-                          },
-                          icon: Icon(
-                            Icons.timer,
-                            size: 36.0,
-                          ),
-                        ),
-                      ],
+                ],
+              ),
+              Container(
+                width: albumArtSize,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular((5.0)),
+                  child: Image.asset('assets/no-art-found.png'),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10.0, 28.0, 10.0, 10.0),
+                child: Text(
+                  title,
+                  textScaleFactor: 1.27,
+                ),
+              ),
+              // apply slidertheme to make slider label black so it's visible (with dark theme it's white by default)
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  showValueIndicator: ShowValueIndicator.onlyForContinuous,
+                  valueIndicatorTextStyle: TextStyle(color: Colors.black),
+                ),
+                child: Slider(
+                  activeColor: Colors.white,
+                  value: _playPosition,
+                  min: 0.0,
+                  max: _duration,
+                  label: millisecondsToMinutesAndSeconds(_playPosition),
+                  onChanged: (double value) {
+                    setState(() {
+                      int msToSeekTo = value.toInt() - 100;
+                      _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
+                    });
+                  },
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  IconButton(
+                    padding: new EdgeInsets.all(0.0),
+                    onPressed: () {
+                      int tenSecsBefore = (_playPosition - 10000.0).toInt();
+                      print('tensecsbefore: $tenSecsBefore');
+                      if (tenSecsBefore <= 0) {
+                        _audioPlayer.seek(Duration(milliseconds: 0));
+                      } else {
+                        _audioPlayer
+                            .seek(Duration(milliseconds: tenSecsBefore));
+                      }
+                    },
+                    icon: Icon(
+                      Icons.forward_10,
+                      size: 40.0,
+                    ),
+                  ),
+                  IconButton(
+                    padding: new EdgeInsets.all(0.0),
+                    onPressed: () {
+                      if (_isPlaying) {
+                        _stop();
+                      } else {
+                        _resume();
+                      }
+                    },
+                    icon: Icon(
+                      _isPlaying
+                          ? Icons.pause_circle_filled
+                          : Icons.play_circle_filled,
+                      size: 48.0,
+                    ),
+                  ),
+                  IconButton(
+                    padding: new EdgeInsets.all(0.0),
+                    onPressed: () {
+                      int thirtySecsFwd = (_playPosition + 30000.0).toInt();
+                      _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
+                    },
+                    icon: Icon(
+                      Icons.forward_30,
+                      size: 40.0,
                     ),
                   ),
                 ],
               ),
-            ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(0.0, 20.0, 0.0, 0.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('make a note');
+                      },
+                      icon: Icon(
+                        Icons.note_add,
+                        size: 36.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('prev bookmark');
+                      },
+                      icon: Icon(
+                        Icons.chevron_left,
+                        size: 40.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('bookmarked!');
+                      },
+                      icon: Icon(
+                        Icons.bookmark_border,
+                        size: 44.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('next bkmrk');
+                      },
+                      icon: Icon(
+                        Icons.chevron_right,
+                        size: 40.0,
+                      ),
+                    ),
+                    IconButton(
+                      padding: new EdgeInsets.all(0.0),
+                      onPressed: () {
+                        print('sleep timer');
+                      },
+                      icon: Icon(
+                        Icons.timer,
+                        size: 36.0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        );
-      }
+        ),
+      ),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:path/path.dart';
+import 'package:pawdio/models/bookmark.dart';
+import 'package:pawdio/models/note.dart';
 import 'package:sqflite/sqflite.dart';
 
 class PawdioDb {
@@ -29,9 +31,20 @@ class PawdioDb {
     _database = await openDatabase(path, version: _databaseVersion,
         onCreate: (Database db, int version) async {
       print('creating db');
-      await db.execute(
-          // TODO: Create tables for bookmarks & notes, and foreign keys to them in the the audio table
-          'CREATE TABLE Audios (file_path TEXT UNIQUE, last_position INTEGER)');
+      await db.execute('''
+          CREATE TABLE IF NOT EXISTS Audios(
+            file_path TEXT UNIQUE,
+            last_position INTEGER
+          );
+          CREATE TABLE IF NOT EXISTS Bookmarks(
+            timestamp INTEGER,
+            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
+          );
+          CREATE TABLE IF NOT EXISTS Notes(
+            note TEXT,
+            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
+          );
+          ''');
     });
     print('***** DB SETUP COMPLETE ! *****');
   }
@@ -53,12 +66,19 @@ class PawdioDb {
 //  \___$$$\  \______/ \________|\__|  \__|\______|\________| \______/
 //      \___|
 
+//  █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ███████╗
+// ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██╔════╝
+// ███████║██║   ██║██║  ██║██║██║   ██║███████╗
+// ██╔══██║██║   ██║██║  ██║██║██║   ██║╚════██║
+// ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████║
+// ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝
+
   Future<List<Map<String, dynamic>>> queryAudioForFilePath(
       String filePath) async {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
-        return ctx.rawQuery(
-            'SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
+        return ctx
+            .rawQuery('SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
       });
       return res;
     } catch (e) {
@@ -70,8 +90,7 @@ class PawdioDb {
   Future<List<Map<String, dynamic>>> getAllAudios() async {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
-        return ctx.rawQuery(
-            'SELECT * FROM Audios');
+        return ctx.rawQuery('SELECT * FROM Audios');
       });
       return res;
     } catch (e) {
@@ -100,8 +119,63 @@ class PawdioDb {
             [newPlayPosition, filePath]);
       });
     } catch (e) {
-      print('woopsie poopsie, update failed. quietly failing');
+      print('woopsie poopsie, last position update failed. heres err $e');
     }
   }
 
+// ██████╗  ██████╗  ██████╗ ██╗  ██╗███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗
+// ██╔══██╗██╔═══██╗██╔═══██╗██║ ██╔╝████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝
+// ██████╔╝██║   ██║██║   ██║█████╔╝ ██╔████╔██║███████║██████╔╝█████╔╝ ███████╗
+// ██╔══██╗██║   ██║██║   ██║██╔═██╗ ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ╚════██║
+// ██████╔╝╚██████╔╝╚██████╔╝██║  ██╗██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████║
+// ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
+
+  Future<void> createBookmark(Bookmark bookmark) async {
+    try {
+      await _database.transaction((ctx) async {
+        await ctx.insert('Bookmarks', bookmark.toMap());
+      });
+    } catch (e) {
+      print('woopsie poopsie, bookmark update failed. here err: $e');
+    }
+  }
+
+  Future<void> deleteBookmark(int timestamp) async {
+    try {
+      await _database.transaction((ctx) async {
+        await ctx.delete('Bookmarks',
+            where: 'timestamp=?', whereArgs: [timestamp]);
+      });
+    } catch (e) {
+      print('woopsie poopsie, bookmark delete failed. here err: $e');
+    }
+  }
+
+// ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
+// ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
+// ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗
+// ██║╚██╗██║██║   ██║   ██║   ██╔══╝  ╚════██║
+// ██║ ╚████║╚██████╔╝   ██║   ███████╗███████║
+// ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝
+
+  Future<void> createNote(Note note) async {
+    try {
+      await _database.transaction((ctx) async {
+        await ctx.insert('Notes', note.toMap());
+      });
+    } catch (e) {
+      print('woopsie poopsie, note update failed. here err: $e');
+    }
+  }
+
+  Future<void> deleteNote(String note) async {
+    try {
+      await _database.transaction((ctx) async {
+        await ctx.delete('Notes',
+            where: 'note=?', whereArgs: [note]);
+      });
+    } catch (e) {
+      print('woopsie poopsie, note delete failed. here err: $e');
+    }
+  }
 }

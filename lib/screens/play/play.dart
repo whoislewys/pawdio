@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 import 'package:pawdio/utils/util.dart';
 
@@ -27,6 +28,9 @@ class _PlayscreenState extends State<Playscreen> {
   String title = '';
   String _currentFilePath;
 
+  // todo: implement this
+  bool get currentlyOnBookmark => false;
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +41,6 @@ class _PlayscreenState extends State<Playscreen> {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
-      // _chooseAndPlayFile();
     });
 
     // Set up listener for app lifecycle events
@@ -113,6 +116,18 @@ class _PlayscreenState extends State<Playscreen> {
     print('pausing');
     await _audioPlayer.pause();
     setState(() => _isPlaying = false);
+  }
+
+  void _createBookmark(position) {
+      print('bookmarked!');
+      _database.createBookmark(Bookmark(timestamp: position));
+  }
+
+  void _createOrDeleteBookmark(int position) {
+    if (position == _playPosition) {
+      _database.deleteBookmark(position);
+    }
+    _createBookmark(position);
   }
 
   @override
@@ -257,10 +272,15 @@ class _PlayscreenState extends State<Playscreen> {
                     ),
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () {
-                        print('bookmarked!');
-                      },
-                      icon: Icon(
+                      onPressed: () => _createOrDeleteBookmark(_playPosition.toInt()),
+                      // if play position is on top of a bookmark position, show the filled bookmark icon
+                      // else, show the outlined one
+                      icon: currentlyOnBookmark
+                      ? Icon(
+                        Icons.bookmark,
+                        size: 44.0,
+                      )
+                      : Icon(
                         Icons.bookmark_border,
                         size: 44.0,
                       ),

@@ -13,9 +13,12 @@ class CurrentFilePathBloc implements Bloc {
   Stream<String> get filePathStream => _filePathController.stream;
 
   // Input for the bloc
-  void _selectFilePath(String filePath) {
+  void selectFilePath(String filePath) {
+    print('***selecting filepath***');
     _filePath = filePath;
+    print('selected path $_filePath');
     _filePathController.sink.add(filePath);
+    print('added to controller');
   }
 
   // Cleanup

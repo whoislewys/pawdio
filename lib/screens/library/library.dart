@@ -1,6 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:pawdio/blocs/bloc.dart';
+import 'package:pawdio/blocs/bloc_provider.dart';
+import 'package:pawdio/blocs/current_file_path_bloc.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
@@ -28,14 +31,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return;
   }
 
-  Future<void> _chooseAndPlayFile() async {
+  Future<void> _navigateToPlayscreenAndPlayFile(
+      BuildContext ctx, CurrentFilePathBloc bloc, String filePath) async {
+    bloc.selectFilePath(filePath);
+    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen()));
+  }
+
+  Future<void> _chooseAndPlayFile(
+      BuildContext ctx, CurrentFilePathBloc bloc) async {
     // Open file manager and choose file
     var chosenFile = await FilePicker.getFilePath();
-    // todo:  navigate to play screen
+    _navigateToPlayscreenAndPlayFile(ctx, bloc, chosenFile);
   }
 
   @override
   Widget build(BuildContext context) {
+    var bloc = BlocProvider.of<CurrentFilePathBloc>(context);
     return Scaffold(
       body: Center(
         child: SafeArea(
@@ -48,7 +59,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     value: 1,
                     child: ListTile(
                       title: Text('Choose File'),
-                      onTap: _chooseAndPlayFile,
+                      onTap: () => _chooseAndPlayFile(context, bloc),
                     ),
                   ),
                 ],
@@ -65,14 +76,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         shrinkWrap: true,
                         itemCount: _audios.length,
                         itemBuilder: (BuildContext context, int index) {
+                          String audioFilePath = _audios[index]['file_path'];
                           return ListTile(
-                            onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => Playscreen())),
+                            onTap: () => _navigateToPlayscreenAndPlayFile(
+                                context, bloc, audioFilePath),
                             title: Text(
-                              getFileNameFromFilePath(
-                                  _audios[index]['file_path']),
+                              getFileNameFromFilePath(audioFilePath),
                             ),
                           );
                         },

@@ -66,19 +66,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   future: _hydrateAudio(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.done) {
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _audios.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          String audioFilePath = _audios[index]['file_path'];
-                          return ListTile(
-                            onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath),
-                            title: Text(
-                              getFileNameFromFilePath(audioFilePath),
-                            ),
-                          );
-                        },
+                      return Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _audios.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            String audioFilePath = _audios[index]['file_path'];
+                            return ListTile(
+                              onTap: () => _navigateToPlayscreenAndPlayFile(
+                                  context, audioFilePath),
+                              title: Text(
+                                getFileNameFromFilePath(audioFilePath),
+                              ),
+                            );
+                          },
+                        ),
                       );
                     } else {
                       return CircularProgressIndicator();

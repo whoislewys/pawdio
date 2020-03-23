@@ -46,46 +46,52 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: SafeArea(
           child: Column(
             children: <Widget>[
-              PopupMenuButton(
-                icon: Icon(Icons.more_vert, size: 34.0),
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    value: 1,
-                    child: ListTile(
-                      title: Text('Choose File'),
-                      onTap: () => _chooseAndPlayFile(context),
-                    ),
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16.0),
+                  child: PopupMenuButton(
+                    icon: Icon(Icons.more_vert, size: 34.0),
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: 1,
+                        child: ListTile(
+                          title: Text('Choose File'),
+                          onTap: () => _chooseAndPlayFile(context),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               Text(
                 'Library',
                 style: Theme.of(context).textTheme.title,
               ),
               FutureBuilder(
-                  future: _hydrateAudio(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return Expanded(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _audios.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            String audioFilePath = _audios[index]['file_path'];
-                            return ListTile(
-                              onTap: () => _navigateToPlayscreenAndPlayFile(
-                                  context, audioFilePath),
-                              title: Text(
-                                getFileNameFromFilePath(audioFilePath),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    } else {
-                      return CircularProgressIndicator();
-                    }
-                  }),
+                future: _hydrateAudio(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    return Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _audios.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          String audioFilePath = _audios[index]['file_path'];
+                          return ListTile(
+                            onTap: () => _navigateToPlayscreenAndPlayFile(
+                                context, audioFilePath),
+                            title: Text(
+                              getFileNameFromFilePath(audioFilePath),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+              }),
             ],
           ),
         ),

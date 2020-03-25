@@ -270,7 +270,13 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        print('prev bookmark');
+                        int prevBookmarkIdx = findNearestBelow(sortedList: _bookmarkTimes, element: _playPosition.toInt());
+                        print('prev bookmark idx: $prevBookmarkIdx');
+                        Bookmark prevBookmark = _bookmarks[prevBookmarkIdx];
+                        print('prev bookmark: $prevBookmark');
+
+                        _stop(); // PAUSE
+                        _audioPlayer.seek(Duration(milliseconds: prevBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_left,
@@ -295,7 +301,13 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        print('next bkmrk');
+                        int nextBookmarkIdx = findNearestAbove(sortedList: _bookmarkTimes, element: _playPosition.toInt());
+                        print('prev bookmark idx: $nextBookmarkIdx');
+                        Bookmark nextBookmark = _bookmarks[nextBookmarkIdx];
+                        print('prev bookmark: $nextBookmark');
+
+                        _stop(); // PAUSE
+                        _audioPlayer.seek(Duration(milliseconds: nextBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_right,

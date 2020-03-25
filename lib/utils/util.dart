@@ -35,6 +35,7 @@ int findNearestBelow({@required List<int> sortedList, @required int element}) {
   // If no element is lesser than the input element, return the first element in the list
   return 0;
 }
+
 // int binarySearch<T>(List<T> sortedList, T value, {int compare(T a, T b)}) {
 //   compare ??= defaultCompare<T>();
 //   int min = 0;

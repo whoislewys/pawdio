@@ -27,9 +27,17 @@ class _PlayscreenState extends State<Playscreen> {
   PawdioDb _database;
   String title = '';
   String _currentFilePath;
+  List<Bookmark> _bookmarks;
+  List<int> _bookmarkTimes;
 
-  // todo: implement this
-  bool get currentlyOnBookmark => false;
+  // Whether there is bookmark at current play position
+  // I should probably also add a debounce, or at least a short term cache, could use (`memoize`)
+  // To avoid spamming while paused (would need to make sure to invalidate cache on song change though)a
+  // bool get currentlyOnBookmark => _bookmarkTimes.contains(_playPosition.toInt());
+  bool get currentlyOnBookmark {
+    print('calling currently on bookmark');
+    return _bookmarkTimes.contains(_playPosition.toInt());
+  }
 
   @override
   void initState() {
@@ -41,6 +49,9 @@ class _PlayscreenState extends State<Playscreen> {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
+
+      _bookmarks = await _database.getBookmarks();
+      _bookmarkTimes = _bookmarks.map((bookmark) => bookmark.timestamp);
     });
 
     // Set up listener for app lifecycle events
@@ -93,11 +104,7 @@ class _PlayscreenState extends State<Playscreen> {
     List<Map<String, dynamic>> audioResult =
         await _database.queryAudioForFilePath(filePath);
     if (audioResult.isNotEmpty) {
-      print(
-          'file chosen before. should query for last position, play, and seek to it here');
       int previousPosition = audioResult.first['last_position'];
-      print('audio res first ${audioResult.first}');
-      print('last position $previousPosition');
       _audioPlayer.seek(Duration(milliseconds: previousPosition));
     } else {
       // if file has not been chosen before, create record for it in DB

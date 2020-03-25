@@ -151,6 +151,19 @@ class PawdioDb {
     }
   }
 
+  Future<List<Bookmark>> getBookmarks() async {
+    try {
+      var rows;
+      await _database.transaction((ctx) async {
+        rows = await ctx.rawQuery('SELECT * FROM Bookmarks');
+      });
+      return rows.map(((row) => Bookmark.fromRow(row))).toList();
+    } catch (e) {
+      print('woopsie poopsie, note update failed. here err: $e');
+      return null;
+    }
+  }
+  
 // ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
 // ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
 // ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗

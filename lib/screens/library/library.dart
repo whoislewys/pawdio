@@ -49,7 +49,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 16.0),
+                  padding: EdgeInsets.only(right: 16.0),
                   child: PopupMenuButton(
                     icon: Icon(Icons.more_vert, size: 34.0),
                     itemBuilder: (context) => [

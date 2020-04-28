@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -84,23 +82,26 @@ class _PlayscreenState extends State<Playscreen> {
     _playFile(_currentFilePath);
   }
 
+  /// Setup subscriptions audioPlayer's PlayPosition
   Future<void> _playFile(String filePath) async {
     // set title to show in media player
     title = getFileNameFromFilePath(filePath);
 
     // Play chosen file and setup listeners on player
     await _audioPlayer.play(filePath, isLocal: true);
+
     _audioPlayer.onDurationChanged.listen((Duration d) {
-      if (e != null) {
+      if (d != null) {
         setState(() {
           _duration = d.inMilliseconds.toDouble();
         });
       }
     });
-    _audioPlayer.onAudioPositionChanged.listen((Duration d) {
-      if (e != null) {
+
+    _audioPlayer.onAudioPositionChanged.listen((Duration p) {
+      if (p != null) {
         setState(() {
-          _playPosition = d.inMilliseconds.toDouble();
+          _playPosition = p.inMilliseconds.toDouble();
         });
       }
     });

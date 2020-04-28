@@ -28,24 +28,34 @@ class PawdioDb {
     var databasesPath = await getDatabasesPath();
     String path = join(databasesPath, _databaseName);
 
-    _database = await openDatabase(path, version: _databaseVersion,
-        onCreate: (Database db, int version) async {
-      print('creating db');
-      await db.execute('''
-          CREATE TABLE IF NOT EXISTS Audios(
-            file_path TEXT UNIQUE,
-            last_position INTEGER
-          );
-          CREATE TABLE IF NOT EXISTS Bookmarks(
-            timestamp INTEGER,
-            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-          );
-          CREATE TABLE IF NOT EXISTS Notes(
-            note TEXT,
-            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-          );
-          ''');
-    });
+    try {
+      print('opening db');
+      _database = await openDatabase(path, version: _databaseVersion,
+          onCreate: (Database db, int version) async {
+            print('creating db');
+            try {
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS Audios(
+                      file_path TEXT UNIQUE,
+                      last_position INTEGER
+                  );
+                  CREATE TABLE IF NOT EXISTS Bookmarks(
+                      timestamp INTEGER,
+                      FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
+                  );
+                  CREATE TABLE IF NOT EXISTS Notes(
+                      note TEXT,
+                      FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
+                  );
+                  ''');
+            } catch(e) {
+              print('error creating db: $e');
+            }
+          }
+      );
+    } catch (e) {
+      print('error opening db: $e');
+    }
     print('***** DB SETUP COMPLETE ! *****');
   }
 

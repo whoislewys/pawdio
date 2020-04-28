@@ -48,15 +48,14 @@ class _PlayscreenState extends State<Playscreen> {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
-      print('init bookmark times');
       await _initBookmarkTimes();
     });
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-        inactiveCallback: () => _database.updateLastPosition(
-            _currentFilePath, _playPosition.toInt())));
+            inactiveCallback: () => _database.updateLastPosition(
+                _currentFilePath, _playPosition.toInt())));
     print('current filepath: $_currentFilePath');
     _playFile(_currentFilePath);
   }
@@ -132,8 +131,9 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   void _createBookmark(position) {
-      print('bookmarked!');
-      _database.createBookmark(Bookmark(timestamp: position));
+    print('');
+    print('bookmark clicked!');
+    _database.createBookmark(Bookmark(timestamp: position));
   }
 
   void _createOrDeleteBookmark(int position) {

@@ -35,8 +35,9 @@ class _PlayscreenState extends State<Playscreen> {
   // To avoid spamming while paused (would need to make sure to invalidate cache on song change though)a
   // bool get currentlyOnBookmark => _bookmarkTimes.contains(_playPosition.toInt());
   bool get currentlyOnBookmark {
-    print('calling currently on bookmark');
-    return _bookmarkTimes.contains(_playPosition.toInt());
+    return _bookmarkTimes == null
+        ? false
+        : _bookmarkTimes.contains(_playPosition.toInt());
   }
 
   @override
@@ -49,9 +50,8 @@ class _PlayscreenState extends State<Playscreen> {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
-
-      _bookmarks = await _database.getBookmarks();
-      _bookmarkTimes = _bookmarks.map((bookmark) => bookmark.timestamp);
+      print('init bookmark times');
+      await _initBookmarkTimes();
     });
 
     // Set up listener for app lifecycle events
@@ -61,6 +61,11 @@ class _PlayscreenState extends State<Playscreen> {
             _currentFilePath, _playPosition.toInt())));
     print('current filepath: $_currentFilePath');
     _playFile(_currentFilePath);
+  }
+
+  Future<void> _initBookmarkTimes() async {
+    _bookmarks = await _database.getBookmarks();
+    _bookmarkTimes = _bookmarks.map((bookmark) => bookmark.timestamp);
   }
 
   @override

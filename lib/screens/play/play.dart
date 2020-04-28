@@ -119,6 +119,11 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _isPlaying = true);
   }
 
+  Future<void> _seekToStart() async {
+    await _audioPlayer.seek(Duration(milliseconds: 0));
+    setState(() => _isPlaying = true);
+  }
+
   Future<void> _resume() async {
     await _audioPlayer.resume();
     setState(() => _isPlaying = true);
@@ -145,6 +150,13 @@ class _PlayscreenState extends State<Playscreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('playpostiion: $_playPosition');
+    if (_playPosition > _duration) {
+      // to catch weird audioPlayer bug where it sends a request to native media player to skip past end of audio before build
+      _seekToStart();
+      _resume();
+    }
+
     double albumArtSize = MediaQuery.of(context).size.width * 0.82;
     return Scaffold(
       body: Center(
@@ -249,6 +261,10 @@ class _PlayscreenState extends State<Playscreen> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
+                      if (thirtySecsFwd >= _duration) {
+                        _audioPlayer.seek(Duration(milliseconds: _duration.toInt()));
+                        return;
+                      }
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
                     },
                     icon: Icon(

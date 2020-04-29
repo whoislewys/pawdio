@@ -25,7 +25,8 @@ class PawdioDb {
     }
 
     print('\n****Setting up DB****\n');
-    var databasesPath = await getDatabasesPath();
+    var databasesPath = await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
+    print('databasesPath: $databasesPath');
     String path = join(databasesPath, _databaseName);
 
     try {

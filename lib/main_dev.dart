@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:pawdio/config.dart';
 import 'package:pawdio/screens/library/library.dart';
 
-// void main() => runApp(MyApp());
+import 'package:flutter_stetho/flutter_stetho.dart';
+
+void main() {
+  print('devmode_D E V   M O D E_devmode');
+  var configuredApp = Config(appName: 'Pawdio', flavor: 'dev', child: MyApp());
+  Stetho.initialize();
+  runApp(configuredApp);
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.

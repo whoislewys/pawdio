@@ -48,6 +48,7 @@ class _PlayscreenState extends State<Playscreen> {
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
+      // await _database.deleteDB();
       await _initBookmarkTimes();
     });
 

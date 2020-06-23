@@ -15,6 +15,7 @@ class PawdioDb {
   static Future<PawdioDb> create() async {
     PawdioDb pawdioDb = PawdioDb._privateConstructor();
     await pawdioDb.setupDb();
+    // await pawdioDb.deleteDB();
     return pawdioDb;
   }
 
@@ -25,35 +26,69 @@ class PawdioDb {
     }
 
     print('\n****Setting up DB****\n');
-    var databasesPath = await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
+    var databasesPath =
+        await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
     print('databasesPath: $databasesPath');
     String path = join(databasesPath, _databaseName);
 
     try {
       print('opening db');
-      _database = await openDatabase(path, version: _databaseVersion,
+      // TODO: check if i actually need this to enable foreign key support. seems fucked
+      final addForeignKeySupport = (Database db) async {
+        print('addin fkey support');
+        try {
+          await db.execute('PRAGMA foreign_keys = ON');
+        } catch (e) {
+          print('error $e');
+        }
+      };
+      _database = await openDatabase(path,
+          version: _databaseVersion, onConfigure: addForeignKeySupport,
           onCreate: (Database db, int version) async {
-            print('creating db');
-            try {
-              await db.execute('''
+        print('creating db');
+        try {
+          print('create table audio');
+          try {
+                      // id INTEGER PRIMARY KEY AUTOINCREMENT,
+            await db.execute('''
                   CREATE TABLE IF NOT EXISTS Audios(
                       file_path TEXT UNIQUE,
                       last_position INTEGER
                   );
-                  CREATE TABLE IF NOT EXISTS Bookmarks(
-                      timestamp INTEGER,
-                      FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-                  );
-                  CREATE TABLE IF NOT EXISTS Notes(
-                      note TEXT,
-                      FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-                  );
                   ''');
-            } catch(e) {
-              print('error creating db: $e');
-            }
+          } catch (e) {
+            print('Error creating Audio table: $e');
           }
-      );
+
+          try {
+            print('create table bookmarks');
+            await db.execute('''
+                    CREATE TABLE IF NOT EXISTS Bookmarks(
+                        timestamp INTEGER,
+                        audio_id INTEGER,
+                        FOREIGN KEY(audio_id) REFERENCES Audios(rowid) ON DELETE NO ACTION ON UPDATE NO ACTION
+                    );
+                    ''');
+          } catch (e) {
+            print('Error creating Bookmarks table: $e');
+          }
+
+          print('create table notes');
+          try {
+            await db.execute('''
+                    CREATE TABLE IF NOT EXISTS Notes(
+                        note TEXT,
+                        audio_id INTEGER,
+                        FOREIGN KEY(audio_id) REFERENCES Audios(rowid) ON DELETE NO ACTION ON UPDATE NO ACTION
+                    );
+                    ''');
+          } catch (e) {
+            print('Error creating Notes table: $e');
+          }
+        } catch (e) {
+          print('error creating db: $e');
+        }
+      });
     } catch (e) {
       print('error opening db: $e');
     }
@@ -154,8 +189,8 @@ class PawdioDb {
   Future<void> deleteBookmark(int timestamp) async {
     try {
       await _database.transaction((ctx) async {
-        await ctx.delete('Bookmarks',
-            where: 'timestamp=?', whereArgs: [timestamp]);
+        await ctx
+            .delete('Bookmarks', where: 'timestamp=?', whereArgs: [timestamp]);
       });
     } catch (e) {
       print('woopsie poopsie, bookmark delete failed. here err: $e');
@@ -195,8 +230,7 @@ class PawdioDb {
   Future<void> deleteNote(String note) async {
     try {
       await _database.transaction((ctx) async {
-        await ctx.delete('Notes',
-            where: 'note=?', whereArgs: [note]);
+        await ctx.delete('Notes', where: 'note=?', whereArgs: [note]);
       });
     } catch (e) {
       print('woopsie poopsie, note delete failed. here err: $e');

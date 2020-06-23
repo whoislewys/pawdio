@@ -13,7 +13,7 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  List<Map<String, dynamic>> _audios;
+  List<Map<String, dynamic>> _audios = [];
   PawdioDb _database;
 
   @override
@@ -24,7 +24,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _hydrateAudio() async {
     _database = await PawdioDb.create();
-    _audios = await _database.getAllAudios();
+    // _audios = await _database.getAllAudios();
     return;
   }
 

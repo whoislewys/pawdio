@@ -24,19 +24,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _hydrateAudio() async {
     _database = await PawdioDb.create();
-    // _audios = await _database.getAllAudios();
+    _audios = await _database.getAllAudios();
     return;
   }
 
   Future<void> _navigateToPlayscreenAndPlayFile(
-      BuildContext ctx, String filePath) async {
-    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath)));
+      BuildContext ctx, String filePath, int audioId) async {
+    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath, audioId: audioId)));
   }
 
   Future<void> _chooseAndPlayFile(BuildContext ctx) async {
     // Open file manager and choose file
-    var chosenFile = await FilePicker.getFilePath();
-    _navigateToPlayscreenAndPlayFile(ctx, chosenFile);
+    var chosenFilePath = await FilePicker.getFilePath();
+    
+    List<Map<String, dynamic>> audioResult =
+        await _database.queryAudioForFilePath(chosenFilePath);
+    if (audioResult.isEmpty) {
+      // if file has not been chosen before, create record for it in DB
+     await _database.createAudio(chosenFilePath);
+    }
+    
+    print('audioResult: $audioResult');
+    _navigateToPlayscreenAndPlayFile(ctx, chosenFilePath, audioResult[0]['rowid']);
   }
 
   @override
@@ -78,9 +87,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         itemCount: _audios.length,
                         itemBuilder: (BuildContext context, int index) {
                           String audioFilePath = _audios[index]['file_path'];
+                          int audioId = _audios[index]['rowid'];
+
                           return ListTile(
                             onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath),
+                                context, audioFilePath, audioId),
                             title: Text(
                               getFileNameFromFilePath(audioFilePath),
                             ),

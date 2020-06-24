@@ -10,8 +10,9 @@ import 'package:pawdio/utils/util.dart';
 
 class Playscreen extends StatefulWidget {
   final String currentFilePath;
+  final int audioId;
   // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
-  Playscreen({Key key, @required this.currentFilePath}) : super(key: key);
+  Playscreen({Key key, @required this.currentFilePath, @required this.audioId}) : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -24,7 +25,8 @@ class _PlayscreenState extends State<Playscreen> {
   double _playPosition;
   PawdioDb _database;
   String title = '';
-  String _currentFilePath;
+  String currentFilePath;
+  int audioId;
   List<Bookmark> _bookmarks;
   List<int> _bookmarkTimes;
 
@@ -44,11 +46,11 @@ class _PlayscreenState extends State<Playscreen> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    _currentFilePath = widget.currentFilePath;
+    currentFilePath = widget.currentFilePath;
+    audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
-      // await _database.deleteDB();
       await _initBookmarkTimes();
     });
 
@@ -56,9 +58,9 @@ class _PlayscreenState extends State<Playscreen> {
     // to save lastPosition of current audio when app goes inactive or closes.
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
             inactiveCallback: () => _database.updateLastPosition(
-                _currentFilePath, _playPosition.toInt())));
-    print('current filepath: $_currentFilePath');
-    _playFile(_currentFilePath);
+                currentFilePath, _playPosition.toInt())));
+    print('current filepath: $currentFilePath');
+    _playFile(currentFilePath);
   }
 
   Future<void> _initBookmarkTimes() async {
@@ -78,8 +80,8 @@ class _PlayscreenState extends State<Playscreen> {
 
   Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
-    _currentFilePath = await FilePicker.getFilePath();
-    _playFile(_currentFilePath);
+    currentFilePath = await FilePicker.getFilePath();
+    _playFile(currentFilePath);
   }
 
   /// Setup subscriptions audioPlayer's PlayPosition
@@ -112,9 +114,6 @@ class _PlayscreenState extends State<Playscreen> {
     if (audioResult.isNotEmpty) {
       int previousPosition = audioResult.first['last_position'];
       _audioPlayer.seek(Duration(milliseconds: previousPosition));
-    } else {
-      // if file has not been chosen before, create record for it in DB
-      _database.createAudio(filePath);
     }
 
     setState(() => _isPlaying = true);
@@ -139,7 +138,7 @@ class _PlayscreenState extends State<Playscreen> {
   void _createBookmark(position) {
     print('');
     print('bookmark clicked!');
-    _database.createBookmark(Bookmark(timestamp: position));
+    _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
   }
 
   void _createOrDeleteBookmark(int position) {

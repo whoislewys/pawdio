@@ -46,14 +46,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     if (audioResult.isEmpty) {
       // if file has not been chosen before, create record for it in DB
-      print('Creating new audio!');
       await _database.createAudio(chosenFilePath);
       final newAudios = await _database.getAllAudios();
       setState(() { _audios = newAudios; });
       audioResult = await _database.queryAudioForFilePath(chosenFilePath);
     }
     
-    print('audioResult: $audioResult');
     _navigateToPlayscreenAndPlayFile(ctx, chosenFilePath, audioResult[0]['rowid']);
   }
 
@@ -95,10 +93,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         shrinkWrap: true,
                         itemCount: _audios.length,
                         itemBuilder: (BuildContext context, int index) {
-                          print('_audios: $_audios');
-                          print('index: $index');
                           String audioFilePath = _audios[index]['file_path'];
-                          int audioId = _audios[index]['rowid'];
+                          int audioId = _audios[index]['id'];
+                          print('audio id: $audioId');
 
                           return ListTile(
                             onTap: () => _navigateToPlayscreenAndPlayFile(

@@ -52,6 +52,7 @@ class PawdioDb {
                       // id INTEGER PRIMARY KEY AUTOINCREMENT,
             await db.execute('''
                   CREATE TABLE IF NOT EXISTS Audios(
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
                       file_path TEXT UNIQUE,
                       last_position INTEGER
                   );
@@ -66,7 +67,7 @@ class PawdioDb {
                     CREATE TABLE IF NOT EXISTS Bookmarks(
                         timestamp INTEGER,
                         audio_id INTEGER,
-                        FOREIGN KEY(audio_id) REFERENCES Audios(rowid) ON DELETE NO ACTION ON UPDATE NO ACTION
+                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
                     );
                     ''');
           } catch (e) {
@@ -79,7 +80,7 @@ class PawdioDb {
                     CREATE TABLE IF NOT EXISTS Notes(
                         note TEXT,
                         audio_id INTEGER,
-                        FOREIGN KEY(audio_id) REFERENCES Audios(rowid) ON DELETE NO ACTION ON UPDATE NO ACTION
+                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
                     );
                     ''');
           } catch (e) {

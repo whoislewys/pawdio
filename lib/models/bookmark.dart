@@ -14,4 +14,13 @@ class Bookmark {
       'audio_id': audioId,
     };
   }
+
+  @override
+  String toString() {
+    return '''
+
+        Bookmark
+        timestamp: ${this.timestamp}
+        audio_id: ${this.audioId}''';
+  }
 }

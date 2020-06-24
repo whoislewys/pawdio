@@ -35,6 +35,9 @@ class _PlayscreenState extends State<Playscreen> {
   // To avoid spamming while paused (would need to make sure to invalidate cache on song change though)a
   // bool get currentlyOnBookmark => _bookmarkTimes.contains(_playPosition.toInt());
   bool get currentlyOnBookmark {
+    print('currrently on bookmark');
+    print('_bookmarkTimes: $_bookmarkTimes');
+    print('_playPosition: ${_playPosition.toInt()}');
     return _bookmarkTimes == null
         ? false
         : _bookmarkTimes.contains(_playPosition.toInt());
@@ -136,12 +139,18 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _isPlaying = false);
   }
 
-  void _createBookmark(position) {
+  Future<void> _createBookmark(position) async {
     print('');
     print('bookmark clicked!');
     print('Adding bookmark with audioId $audioId at timestamp $position');
     print('');
-    _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
+    await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
+    print('Created bookmark!');
+    final newBookmarks = await _database.getBookmarks();
+    final newBookmarkTimes = List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
+    print('New bookmarks: $newBookmarks');
+    setState(() => _bookmarks = newBookmarks);
+    setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
   void _createOrDeleteBookmark(int position) {

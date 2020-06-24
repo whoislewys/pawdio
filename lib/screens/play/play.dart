@@ -139,13 +139,7 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _isPlaying = false);
   }
 
-  Future<void> _createBookmark(position) async {
-    print('');
-    print('bookmark clicked!');
-    print('Adding bookmark with audioId $audioId at timestamp $position');
-    print('');
-    await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
-    print('Created bookmark!');
+  _updateBookmarksState() async {
     final newBookmarks = await _database.getBookmarks();
     final newBookmarkTimes = List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
     print('New bookmarks: $newBookmarks');
@@ -153,11 +147,25 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
-  void _createOrDeleteBookmark(int position) {
-    if (position == _playPosition) {
-      _database.deleteBookmark(position);
+  Future<void> _createBookmark(position) async {
+    print('');
+    print('bookmark clicked!');
+    print('Adding bookmark with audioId $audioId at timestamp $position');
+    print('');
+    await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
+    _updateBookmarksState();
+  }
+
+  void _createOrDeleteBookmark() {
+    print('creating or deleting Bookmark');
+    int curPosition = _playPosition.toInt();
+    print('position curPosition');
+    if (_bookmarkTimes.contains(curPosition)) {
+      _database.deleteBookmark(curPosition);
+    } else {
+      _createBookmark(curPosition);
     }
-    _createBookmark(position);
+    _updateBookmarksState();
   }
 
   @override
@@ -319,7 +327,7 @@ class _PlayscreenState extends State<Playscreen> {
                     ),
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () => _createOrDeleteBookmark(_playPosition.toInt()),
+                      onPressed: () => _createOrDeleteBookmark(),
                       // if play position is on top of a bookmark position, show the filled bookmark icon
                       // else, show the outlined one
                       icon: currentlyOnBookmark

@@ -204,9 +204,9 @@ class PawdioDb {
       await _database.transaction((ctx) async {
         rows = await ctx.rawQuery('SELECT * FROM Bookmarks');
       });
-      return rows.map(((row) => Bookmark.fromRow(row))).toList();
+      return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
     } catch (e) {
-      print('woopsie poopsie, note update failed. here err: $e');
+      print('woopsie poopsie, getBookmarks failed. Err: $e');
       return null;
     }
   }

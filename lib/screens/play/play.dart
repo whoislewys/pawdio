@@ -66,7 +66,7 @@ class _PlayscreenState extends State<Playscreen> {
 
   Future<void> _initBookmarkTimes() async {
     _bookmarks = await _database.getBookmarks();
-    _bookmarkTimes = _bookmarks.map((bookmark) => bookmark.timestamp);
+    _bookmarkTimes = List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
   }
 
   @override

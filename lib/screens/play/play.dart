@@ -47,6 +47,7 @@ class _PlayscreenState extends State<Playscreen> {
     _playPosition = 0.0;
     _duration = 0.0;
     currentFilePath = widget.currentFilePath;
+    print('widget audioId: ${widget.audioId}');
     audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
@@ -138,6 +139,8 @@ class _PlayscreenState extends State<Playscreen> {
   void _createBookmark(position) {
     print('');
     print('bookmark clicked!');
+    print('Adding bookmark with audioId $audioId at timestamp $position');
+    print('');
     _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
   }
 

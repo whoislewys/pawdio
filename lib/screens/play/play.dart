@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +10,9 @@ import 'package:pawdio/utils/util.dart';
 
 class Playscreen extends StatefulWidget {
   final String currentFilePath;
+  final int audioId;
   // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
-  Playscreen({Key key, @required this.currentFilePath}) : super(key: key);
+  Playscreen({Key key, @required this.currentFilePath, @required this.audioId}) : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -21,15 +20,26 @@ class Playscreen extends StatefulWidget {
 
 class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
+  bool _addNoteModalOpen = false;
   bool _isPlaying = false;
   double _duration;
   double _playPosition;
   PawdioDb _database;
   String title = '';
-  String _currentFilePath;
+  String currentFilePath;
+  int audioId;
+  List<Bookmark> _bookmarks;
+  List<int> _bookmarkTimes;
 
-  // todo: implement this
-  bool get currentlyOnBookmark => false;
+  // Whether there is bookmark at current play position
+  // I should probably also add a debounce, or at least a short term cache, could use (`memoize`)
+  // To avoid spamming while paused (would need to make sure to invalidate cache on song change though)a
+  // bool get currentlyOnBookmark => _bookmarkTimes.contains(_playPosition.toInt());
+  bool get currentlyOnBookmark {
+    return _bookmarkTimes == null
+        ? false
+        : _bookmarkTimes.contains(_playPosition.toInt());
+  }
 
   @override
   void initState() {
@@ -37,19 +47,27 @@ class _PlayscreenState extends State<Playscreen> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    _currentFilePath = widget.currentFilePath;
+    currentFilePath = widget.currentFilePath;
+    audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
       _database = await PawdioDb.create();
+      await _initBookmarkTimes();
     });
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-        inactiveCallback: () => _database.updateLastPosition(
-            _currentFilePath, _playPosition.toInt())));
-    print('current filepath: $_currentFilePath');
-    _playFile(_currentFilePath);
+            inactiveCallback: () => _database.updateLastPosition(
+                currentFilePath, _playPosition.toInt())));
+    _playFile(currentFilePath);
+  }
+
+  Future<void> _initBookmarkTimes() async {
+    _bookmarks = await _database.getBookmarksForAudio(audioId);
+    print('bookmarks: $_bookmarks');
+    _bookmarkTimes = List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
+    print('bookmarktimes: $_bookmarkTimes');
   }
 
   @override
@@ -64,27 +82,30 @@ class _PlayscreenState extends State<Playscreen> {
 
   Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
-    _currentFilePath = await FilePicker.getFilePath();
-    _playFile(_currentFilePath);
+    currentFilePath = await FilePicker.getFilePath();
+    _playFile(currentFilePath);
   }
 
+  /// Setup subscriptions audioPlayer's PlayPosition
   Future<void> _playFile(String filePath) async {
     // set title to show in media player
     title = getFileNameFromFilePath(filePath);
 
     // Play chosen file and setup listeners on player
     await _audioPlayer.play(filePath, isLocal: true);
+
     _audioPlayer.onDurationChanged.listen((Duration d) {
-      if (e != null) {
+      if (d != null) {
         setState(() {
           _duration = d.inMilliseconds.toDouble();
         });
       }
     });
-    _audioPlayer.onAudioPositionChanged.listen((Duration d) {
-      if (e != null) {
+
+    _audioPlayer.onAudioPositionChanged.listen((Duration p) {
+      if (p != null) {
         setState(() {
-          _playPosition = d.inMilliseconds.toDouble();
+          _playPosition = p.inMilliseconds.toDouble();
         });
       }
     });
@@ -93,17 +114,15 @@ class _PlayscreenState extends State<Playscreen> {
     List<Map<String, dynamic>> audioResult =
         await _database.queryAudioForFilePath(filePath);
     if (audioResult.isNotEmpty) {
-      print(
-          'file chosen before. should query for last position, play, and seek to it here');
       int previousPosition = audioResult.first['last_position'];
-      print('audio res first ${audioResult.first}');
-      print('last position $previousPosition');
       _audioPlayer.seek(Duration(milliseconds: previousPosition));
-    } else {
-      // if file has not been chosen before, create record for it in DB
-      _database.createAudio(filePath);
     }
 
+    setState(() => _isPlaying = true);
+  }
+
+  Future<void> _seekToStart() async {
+    await _audioPlayer.seek(Duration(milliseconds: 0));
     setState(() => _isPlaying = true);
   }
 
@@ -113,25 +132,46 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   void _stop() async {
-    print('pausing');
     await _audioPlayer.pause();
     setState(() => _isPlaying = false);
   }
 
-  void _createBookmark(position) {
-      print('bookmarked!');
-      _database.createBookmark(Bookmark(timestamp: position));
+  _updateBookmarksState() async {
+    final newBookmarks = await _database.getBookmarksForAudio(audioId);
+    final newBookmarkTimes = List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
+    setState(() => _bookmarks = newBookmarks);
+    setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
-  void _createOrDeleteBookmark(int position) {
-    if (position == _playPosition) {
-      _database.deleteBookmark(position);
+  Future<void> _createBookmark(position) async {
+    try {
+    await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
+    // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
+    setState(() => _addNoteModalOpen = true);
+    } catch (e) {}
+    _updateBookmarksState();
+  }
+
+  void _createOrDeleteBookmark() {
+    // print('creating or deleting Bookmark');
+    int curPosition = _playPosition.toInt();
+    // print('position curPosition');
+    if (_bookmarkTimes.contains(curPosition)) {
+      _database.deleteBookmark(curPosition);
+    } else {
+      _createBookmark(curPosition);
     }
-    _createBookmark(position);
+    _updateBookmarksState();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_playPosition > _duration) {
+      // to catch weird audioPlayer bug where it sends a request to native media player to skip past end of audio before build
+      _seekToStart();
+      _resume();
+    }
+
     double albumArtSize = MediaQuery.of(context).size.width * 0.82;
     return Scaffold(
       body: Center(
@@ -190,8 +230,7 @@ class _PlayscreenState extends State<Playscreen> {
                   label: millisecondsToMinutesAndSeconds(_playPosition),
                   onChanged: (double value) {
                     setState(() {
-                      int msToSeekTo = value.toInt() - 100;
-                      _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
+                      _audioPlayer.seek(Duration(milliseconds: value.toInt()));
                     });
                   },
                 ),
@@ -203,7 +242,6 @@ class _PlayscreenState extends State<Playscreen> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int tenSecsBefore = (_playPosition - 10000.0).toInt();
-                      print('tensecsbefore: $tenSecsBefore');
                       if (tenSecsBefore <= 0) {
                         _audioPlayer.seek(Duration(milliseconds: 0));
                       } else {
@@ -236,6 +274,10 @@ class _PlayscreenState extends State<Playscreen> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
+                      if (thirtySecsFwd >= _duration) {
+                        _audioPlayer.seek(Duration(milliseconds: _duration.toInt()));
+                        return;
+                      }
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
                     },
                     icon: Icon(
@@ -250,20 +292,65 @@ class _PlayscreenState extends State<Playscreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
+                    PopupMenuButton<double>(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () {
-                        print('make a note');
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
+                        const PopupMenuItem<double>(
+                            value: 0.5,
+                            child: Text('0.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 0.75,
+                            child: Text('0.75'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 1.0,
+                            child: Text('1.0'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 1.5,
+                            child: Text('1.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 2,
+                            child: Text('2'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 2.5,
+                            child: Text('2.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 3.0,
+                            child: Text('3.0'),
+                        ),
+                      ],
+                      onSelected: (double selectedSpeed) async {
+                        if (!_isPlaying) {
+                          // If paused, play first
+                          await _audioPlayer.resume();
+                          setState(() => _isPlaying = true);
+                        }
+                        await _audioPlayer.setPlaybackRate(playbackRate: selectedSpeed);
                       },
+                      shape: const RoundedRectangleBorder(),
                       icon: Icon(
-                        Icons.note_add,
+                        Icons.shutter_speed,
                         size: 36.0,
                       ),
                     ),
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        print('prev bookmark');
+                        if (_bookmarkTimes.isEmpty) return;
+
+                        final sortedBookmarkTimes = _bookmarkTimes;
+                        sortedBookmarkTimes.sort();
+                        int prevBookmarkTimeIdx = findNearestBelow(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
+                        final prevBookmarkTime = sortedBookmarkTimes[prevBookmarkTimeIdx];
+                        Bookmark prevBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == prevBookmarkTime).single;
+
+                        _stop(); // PAUSE
+                        _audioPlayer.seek(Duration(milliseconds: prevBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_left,
@@ -272,7 +359,7 @@ class _PlayscreenState extends State<Playscreen> {
                     ),
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () => _createOrDeleteBookmark(_playPosition.toInt()),
+                      onPressed: () => _createOrDeleteBookmark(),
                       // if play position is on top of a bookmark position, show the filled bookmark icon
                       // else, show the outlined one
                       icon: currentlyOnBookmark
@@ -288,7 +375,17 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        print('next bkmrk');
+                        if (_bookmarkTimes.isEmpty) return;
+
+                        final sortedBookmarkTimes = _bookmarkTimes;
+                        sortedBookmarkTimes.sort();
+                        print('sortedBookmarkTimes: $sortedBookmarkTimes');
+                        int nextBookmarkIdx = findNearestAbove(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
+                        final nextBookmarkTime = sortedBookmarkTimes[nextBookmarkIdx];
+                        Bookmark nextBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == nextBookmarkTime).single;
+
+                        _stop(); // PAUSE
+                        _audioPlayer.seek(Duration(milliseconds: nextBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_right,

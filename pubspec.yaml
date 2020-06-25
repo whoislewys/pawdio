@@ -14,14 +14,15 @@ description: A new Flutter project.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.6.0 <3.0.0"
+  sdk: ">=2.8.0 <3.0.0"
+  flutter: ^1.17.4
 
 dependencies:
   flutter:
     sdk: flutter
   sqflite:
   path:
-  audioplayers:
+  audioplayers: ^0.15.1
   file_picker:
   path_provider:
 
@@ -32,6 +33,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_stetho:
 
 
 # For information on the generic Dart part of this file, see the

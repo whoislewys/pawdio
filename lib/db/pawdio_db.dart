@@ -15,6 +15,7 @@ class PawdioDb {
   static Future<PawdioDb> create() async {
     PawdioDb pawdioDb = PawdioDb._privateConstructor();
     await pawdioDb.setupDb();
+    // await pawdioDb.deleteDB();
     return pawdioDb;
   }
 
@@ -25,27 +26,73 @@ class PawdioDb {
     }
 
     print('\n****Setting up DB****\n');
-    var databasesPath = await getDatabasesPath();
+    var databasesPath =
+        await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
+    print('databasesPath: $databasesPath');
     String path = join(databasesPath, _databaseName);
 
-    _database = await openDatabase(path, version: _databaseVersion,
-        onCreate: (Database db, int version) async {
-      print('creating db');
-      await db.execute('''
-          CREATE TABLE IF NOT EXISTS Audios(
-            file_path TEXT UNIQUE,
-            last_position INTEGER
-          );
-          CREATE TABLE IF NOT EXISTS Bookmarks(
-            timestamp INTEGER,
-            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-          );
-          CREATE TABLE IF NOT EXISTS Notes(
-            note TEXT,
-            FOREIGN KEY(audio_id) REFERENCES Audios(rowid)
-          );
-          ''');
-    });
+    try {
+      print('opening db');
+      // TODO: check if i actually need this to enable foreign key support. seems fucked
+      final addForeignKeySupport = (Database db) async {
+        print('addin fkey support');
+        try {
+          await db.execute('PRAGMA foreign_keys = ON');
+        } catch (e) {
+          print('error $e');
+        }
+      };
+      _database = await openDatabase(path,
+          version: _databaseVersion, onConfigure: addForeignKeySupport,
+          onCreate: (Database db, int version) async {
+        print('creating db');
+        try {
+          print('create table audio');
+          try {
+                      // id INTEGER PRIMARY KEY AUTOINCREMENT,
+            await db.execute('''
+                  CREATE TABLE IF NOT EXISTS Audios(
+                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+                      file_path TEXT UNIQUE,
+                      last_position INTEGER
+                  );
+                  ''');
+          } catch (e) {
+            print('Error creating Audio table: $e');
+          }
+
+          try {
+            print('create table bookmarks');
+            await db.execute('''
+                    CREATE TABLE IF NOT EXISTS Bookmarks(
+                        timestamp INTEGER,
+                        audio_id INTEGER,
+                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                    );
+                    ''');
+          } catch (e) {
+            print('Error creating Bookmarks table: $e');
+          }
+
+          print('create table notes');
+          try {
+            await db.execute('''
+                    CREATE TABLE IF NOT EXISTS Notes(
+                        note TEXT,
+                        audio_id INTEGER,
+                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                    );
+                    ''');
+          } catch (e) {
+            print('Error creating Notes table: $e');
+          }
+        } catch (e) {
+          print('error creating db: $e');
+        }
+      });
+    } catch (e) {
+      print('error opening db: $e');
+    }
     print('***** DB SETUP COMPLETE ! *****');
   }
 
@@ -143,11 +190,37 @@ class PawdioDb {
   Future<void> deleteBookmark(int timestamp) async {
     try {
       await _database.transaction((ctx) async {
-        await ctx.delete('Bookmarks',
-            where: 'timestamp=?', whereArgs: [timestamp]);
+        await ctx
+            .delete('Bookmarks', where: 'timestamp=?', whereArgs: [timestamp]);
       });
     } catch (e) {
       print('woopsie poopsie, bookmark delete failed. here err: $e');
+    }
+  }
+
+  Future<List<Bookmark>> getBookmarks() async {
+    try {
+      var rows;
+      await _database.transaction((ctx) async {
+        rows = await ctx.rawQuery('SELECT * FROM Bookmarks');
+      });
+      return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
+    } catch (e) {
+      print('woopsie poopsie, getBookmarks failed. Err: $e');
+      return null;
+    }
+  }
+
+  Future<List<Bookmark>> getBookmarksForAudio(int audioId) async {
+    try {
+      var rows;
+      await _database.transaction((ctx) async {
+        rows = await ctx.rawQuery('SELECT * FROM Bookmarks B WHERE B.audio_id=$audioId');
+      });
+      return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
+    } catch (e) {
+      print('woopsie poopsie, getBookmarks failed. Err: $e');
+      return null;
     }
   }
 
@@ -171,8 +244,7 @@ class PawdioDb {
   Future<void> deleteNote(String note) async {
     try {
       await _database.transaction((ctx) async {
-        await ctx.delete('Notes',
-            where: 'note=?', whereArgs: [note]);
+        await ctx.delete('Notes', where: 'note=?', whereArgs: [note]);
       });
     } catch (e) {
       print('woopsie poopsie, note delete failed. here err: $e');

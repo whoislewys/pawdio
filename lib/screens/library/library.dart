@@ -29,14 +29,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _navigateToPlayscreenAndPlayFile(
-      BuildContext ctx, String filePath) async {
-    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath)));
+      BuildContext ctx, String filePath, int audioId) async {
+    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath, audioId: audioId)));
   }
 
   Future<void> _chooseAndPlayFile(BuildContext ctx) async {
     // Open file manager and choose file
-    var chosenFile = await FilePicker.getFilePath();
-    _navigateToPlayscreenAndPlayFile(ctx, chosenFile);
+    var chosenFilePath = await FilePicker.getFilePath();
+    if (chosenFilePath == null) {
+      print('ERROR: Null file was chosen');
+      return;
+    }
+    
+    List<Map<String, dynamic>> audioResult =
+        await _database.queryAudioForFilePath(chosenFilePath);
+
+    if (audioResult.isEmpty) {
+      // if file has not been chosen before, create record for it in DB
+      await _database.createAudio(chosenFilePath);
+      final newAudios = await _database.getAllAudios();
+      setState(() { _audios = newAudios; });
+      audioResult = await _database.queryAudioForFilePath(chosenFilePath);
+    }
+    
+    _navigateToPlayscreenAndPlayFile(ctx, chosenFilePath, audioResult[0]['rowid']);
   }
 
   @override
@@ -49,7 +65,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               Align(
                 alignment: Alignment.topRight,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 16.0),
+                  padding: EdgeInsets.only(right: 16.0),
                   child: PopupMenuButton(
                     icon: Icon(Icons.more_vert, size: 34.0),
                     itemBuilder: (context) => [
@@ -78,9 +94,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         itemCount: _audios.length,
                         itemBuilder: (BuildContext context, int index) {
                           String audioFilePath = _audios[index]['file_path'];
+                          int audioId = _audios[index]['id'];
+                          print('audio id: $audioId');
+
                           return ListTile(
                             onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath),
+                                context, audioFilePath, audioId),
                             title: Text(
                               getFileNameFromFilePath(audioFilePath),
                             ),

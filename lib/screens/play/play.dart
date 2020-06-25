@@ -240,7 +240,6 @@ class _PlayscreenState extends State<Playscreen> {
                     padding: new EdgeInsets.all(0.0),
                     onPressed: () {
                       int tenSecsBefore = (_playPosition - 10000.0).toInt();
-                      print('tensecsbefore: $tenSecsBefore');
                       if (tenSecsBefore <= 0) {
                         _audioPlayer.seek(Duration(milliseconds: 0));
                       } else {
@@ -274,11 +273,9 @@ class _PlayscreenState extends State<Playscreen> {
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
                       if (thirtySecsFwd >= _duration) {
-                        print('seeking past duration');
                         _audioPlayer.seek(Duration(milliseconds: _duration.toInt()));
                         return;
                       }
-                      print('seeking fwd, before duration');
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
                     },
                     icon: Icon(
@@ -343,7 +340,6 @@ class _PlayscreenState extends State<Playscreen> {
                         int nextBookmarkIdx = findNearestAbove(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
                         final nextBookmarkTime = sortedBookmarkTimes[nextBookmarkIdx];
                         Bookmark nextBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == nextBookmarkTime).single;
-                        print('next bkmrk: $nextBookmark');
 
                         _stop(); // PAUSE
                         _audioPlayer.seek(Duration(milliseconds: nextBookmark.timestamp));

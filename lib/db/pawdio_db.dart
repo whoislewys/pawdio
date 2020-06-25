@@ -211,6 +211,22 @@ class PawdioDb {
     }
   }
 
+  Future<List<Bookmark>> getBookmarksForAudio(int audioId) async {
+    try {
+      var rows;
+      await _database.transaction((ctx) async {
+        rows = await ctx.rawQuery(
+            '''SELECT * FROM Bookmarks B
+            INNER JOIN Audios A on A.id=B.audio_id;
+            ''');
+      });
+      return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
+    } catch (e) {
+      print('woopsie poopsie, getBookmarks failed. Err: $e');
+      return null;
+    }
+  }
+
 // ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
 // ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
 // ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗

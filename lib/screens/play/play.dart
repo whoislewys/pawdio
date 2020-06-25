@@ -35,9 +35,6 @@ class _PlayscreenState extends State<Playscreen> {
   // To avoid spamming while paused (would need to make sure to invalidate cache on song change though)a
   // bool get currentlyOnBookmark => _bookmarkTimes.contains(_playPosition.toInt());
   bool get currentlyOnBookmark {
-    print('currrently on bookmark');
-    print('_bookmarkTimes: $_bookmarkTimes');
-    print('_playPosition: ${_playPosition.toInt()}');
     return _bookmarkTimes == null
         ? false
         : _bookmarkTimes.contains(_playPosition.toInt());
@@ -50,7 +47,6 @@ class _PlayscreenState extends State<Playscreen> {
     _playPosition = 0.0;
     _duration = 0.0;
     currentFilePath = widget.currentFilePath;
-    print('widget audioId: ${widget.audioId}');
     audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
@@ -63,12 +59,11 @@ class _PlayscreenState extends State<Playscreen> {
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
             inactiveCallback: () => _database.updateLastPosition(
                 currentFilePath, _playPosition.toInt())));
-    print('current filepath: $currentFilePath');
     _playFile(currentFilePath);
   }
 
   Future<void> _initBookmarkTimes() async {
-    _bookmarks = await _database.getBookmarks();
+    _bookmarks = await _database.getBookmarksForAudio(audioId);
     _bookmarkTimes = List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
   }
 
@@ -134,32 +129,30 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   void _stop() async {
-    print('pausing');
     await _audioPlayer.pause();
     setState(() => _isPlaying = false);
   }
 
   _updateBookmarksState() async {
-    final newBookmarks = await _database.getBookmarks();
+    final newBookmarks = await _database.getBookmarksForAudio(audioId);
     final newBookmarkTimes = List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
-    print('New bookmarks: $newBookmarks');
     setState(() => _bookmarks = newBookmarks);
     setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
   Future<void> _createBookmark(position) async {
-    print('');
-    print('bookmark clicked!');
-    print('Adding bookmark with audioId $audioId at timestamp $position');
-    print('');
+    // print('');
+    // print('bookmark clicked!');
+    // print('Adding bookmark with audioId $audioId at timestamp $position');
+    // print('');
     await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
     _updateBookmarksState();
   }
 
   void _createOrDeleteBookmark() {
-    print('creating or deleting Bookmark');
+    // print('creating or deleting Bookmark');
     int curPosition = _playPosition.toInt();
-    print('position curPosition');
+    // print('position curPosition');
     if (_bookmarkTimes.contains(curPosition)) {
       _database.deleteBookmark(curPosition);
     } else {
@@ -170,7 +163,6 @@ class _PlayscreenState extends State<Playscreen> {
 
   @override
   Widget build(BuildContext context) {
-    print('playpostiion: $_playPosition');
     if (_playPosition > _duration) {
       // to catch weird audioPlayer bug where it sends a request to native media player to skip past end of audio before build
       _seekToStart();
@@ -312,10 +304,11 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        int prevBookmarkIdx = findNearestBelow(sortedList: _bookmarkTimes, element: _playPosition.toInt());
-                        print('prev bookmark idx: $prevBookmarkIdx');
-                        Bookmark prevBookmark = _bookmarks[prevBookmarkIdx];
-                        print('prev bookmark: $prevBookmark');
+                        final sortedBookmarkTimes = _bookmarkTimes;
+                        sortedBookmarkTimes.sort();
+                        int prevBookmarkTimeIdx = findNearestBelow(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
+                        final prevBookmarkTime = sortedBookmarkTimes[prevBookmarkTimeIdx];
+                        Bookmark prevBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == prevBookmarkTime).single;
 
                         _stop(); // PAUSE
                         _audioPlayer.seek(Duration(milliseconds: prevBookmark.timestamp));
@@ -343,10 +336,12 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
-                        int nextBookmarkIdx = findNearestAbove(sortedList: _bookmarkTimes, element: _playPosition.toInt());
-                        print('prev bookmark idx: $nextBookmarkIdx');
-                        Bookmark nextBookmark = _bookmarks[nextBookmarkIdx];
-                        print('prev bookmark: $nextBookmark');
+                        final sortedBookmarkTimes = _bookmarkTimes;
+                        sortedBookmarkTimes.sort();
+                        int nextBookmarkIdx = findNearestAbove(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
+                        final nextBookmarkTime = sortedBookmarkTimes[nextBookmarkIdx];
+                        Bookmark nextBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == nextBookmarkTime).single;
+                        print('next bkmrk: $nextBookmark');
 
                         _stop(); // PAUSE
                         _audioPlayer.seek(Duration(milliseconds: nextBookmark.timestamp));

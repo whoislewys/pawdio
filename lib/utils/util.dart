@@ -19,20 +19,24 @@ int findNearestAbove({@required List<int> sortedList, @required int element}) {
       return i;
     }
   }
-  // If no element is greater than the input element, return the last element in the list
-  return sortedList.length;
+  // If no element is greater than the input element, return the idx of the last element in the list
+  return sortedList.length - 1;
 }
 
 /*
 * Returns the index of the element closest to and less than the input element
 */
 int findNearestBelow({@required List<int> sortedList, @required int element}) {
-  for (int i = sortedList.length; i > 0; i--) {
+  print('finding nearest below $element');
+
+  // if (element < sortedList.first) return 0;
+
+    for (int i = sortedList.length - 1; i > 0; i--) {
     if (sortedList[i] < element) {
       return i;
     }
   }
-  // If no element is lesser than the input element, return the first element in the list
+  // If no element is lesser than the input element, return the idx of the first element in the list
   return 0;
 }
 

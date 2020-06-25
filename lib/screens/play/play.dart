@@ -290,13 +290,49 @@ class _PlayscreenState extends State<Playscreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    IconButton(
+                    PopupMenuButton<double>(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () {
-                        print('make a note');
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
+                        const PopupMenuItem<double>(
+                            value: 0.5,
+                            child: Text('0.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 0.75,
+                            child: Text('0.75'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 1.0,
+                            child: Text('1.0'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 1.5,
+                            child: Text('1.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 2,
+                            child: Text('2'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 2.5,
+                            child: Text('2.5'),
+                        ),
+                        const PopupMenuItem<double>(
+                            value: 3.0,
+                            child: Text('3.0'),
+                        ),
+                      ],
+                      onSelected: (double selectedSpeed) async {
+                        if (!_isPlaying) {
+                          // If paused, play first
+                          await _audioPlayer.resume();
+                          setState(() => _isPlaying = true);
+                        }
+                        await _audioPlayer.setPlaybackRate(playbackRate: selectedSpeed);
                       },
+                      shape: const RoundedRectangleBorder(),
                       icon: Icon(
-                        Icons.note_add,
+                        Icons.shutter_speed,
                         size: 36.0,
                       ),
                     ),

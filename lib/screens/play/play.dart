@@ -20,6 +20,7 @@ class Playscreen extends StatefulWidget {
 
 class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
+  bool _addNoteModalOpen = false;
   bool _isPlaying = false;
   double _duration;
   double _playPosition;
@@ -141,11 +142,11 @@ class _PlayscreenState extends State<Playscreen> {
   }
 
   Future<void> _createBookmark(position) async {
-    // print('');
-    // print('bookmark clicked!');
-    // print('Adding bookmark with audioId $audioId at timestamp $position');
-    // print('');
+    try {
     await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
+    // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
+    setState(() => _addNoteModalOpen = true);
+    } catch (e) {}
     _updateBookmarksState();
   }
 

@@ -227,8 +227,7 @@ class _PlayscreenState extends State<Playscreen> {
                   label: millisecondsToMinutesAndSeconds(_playPosition),
                   onChanged: (double value) {
                     setState(() {
-                      int msToSeekTo = value.toInt() - 100;
-                      _audioPlayer.seek(Duration(milliseconds: msToSeekTo));
+                      _audioPlayer.seek(Duration(milliseconds: value.toInt()));
                     });
                   },
                 ),
@@ -274,9 +273,11 @@ class _PlayscreenState extends State<Playscreen> {
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
                       if (thirtySecsFwd >= _duration) {
+                        print('seeking past duration');
                         _audioPlayer.seek(Duration(milliseconds: _duration.toInt()));
                         return;
                       }
+                      print('seeking fwd, before duration');
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
                     },
                     icon: Icon(

@@ -215,10 +215,7 @@ class PawdioDb {
     try {
       var rows;
       await _database.transaction((ctx) async {
-        rows = await ctx.rawQuery(
-            '''SELECT * FROM Bookmarks B
-            INNER JOIN Audios A on A.id=B.audio_id;
-            ''');
+        rows = await ctx.rawQuery('SELECT * FROM Bookmarks B WHERE B.audio_id=$audioId');
       });
       return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
     } catch (e) {

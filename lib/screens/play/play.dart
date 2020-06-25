@@ -65,7 +65,9 @@ class _PlayscreenState extends State<Playscreen> {
 
   Future<void> _initBookmarkTimes() async {
     _bookmarks = await _database.getBookmarksForAudio(audioId);
+    print('bookmarks: $_bookmarks');
     _bookmarkTimes = List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
+    print('bookmarktimes: $_bookmarkTimes');
   }
 
   @override
@@ -339,6 +341,8 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
+                        if (_bookmarkTimes.isEmpty) return;
+
                         final sortedBookmarkTimes = _bookmarkTimes;
                         sortedBookmarkTimes.sort();
                         int prevBookmarkTimeIdx = findNearestBelow(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
@@ -371,8 +375,11 @@ class _PlayscreenState extends State<Playscreen> {
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
+                        if (_bookmarkTimes.isEmpty) return;
+
                         final sortedBookmarkTimes = _bookmarkTimes;
                         sortedBookmarkTimes.sort();
+                        print('sortedBookmarkTimes: $sortedBookmarkTimes');
                         int nextBookmarkIdx = findNearestAbove(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
                         final nextBookmarkTime = sortedBookmarkTimes[nextBookmarkIdx];
                         Bookmark nextBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == nextBookmarkTime).single;

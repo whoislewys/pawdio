@@ -31,7 +31,7 @@ int findNearestBelow({@required List<int> sortedList, @required int element}) {
 
   // if (element < sortedList.first) return 0;
 
-    for (int i = sortedList.length - 1; i > 0; i--) {
+  for (int i = sortedList.length - 1; i > 0; i--) {
     if (sortedList[i] < element) {
       return i;
     }

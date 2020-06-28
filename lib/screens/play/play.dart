@@ -14,7 +14,8 @@ class Playscreen extends StatefulWidget {
   final String currentFilePath;
   final int audioId;
   // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
-  Playscreen({Key key, @required this.currentFilePath, @required this.audioId}) : super(key: key);
+  Playscreen({Key key, @required this.currentFilePath, @required this.audioId})
+      : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -61,15 +62,16 @@ class _PlayscreenState extends State<Playscreen> {
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
     WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-            inactiveCallback: () => _database.updateLastPosition(
-                currentFilePath, _playPosition.toInt())));
+        inactiveCallback: () => _database.updateLastPosition(
+            currentFilePath, _playPosition.toInt())));
     _playFile(currentFilePath);
   }
 
   Future<void> _initBookmarkTimes() async {
     _bookmarks = await _database.getBookmarksForAudio(audioId);
     print('bookmarks: $_bookmarks');
-    _bookmarkTimes = List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
+    _bookmarkTimes =
+        List<int>.from(_bookmarks.map((bookmark) => bookmark.timestamp));
     print('bookmarktimes: $_bookmarkTimes');
   }
 
@@ -141,16 +143,18 @@ class _PlayscreenState extends State<Playscreen> {
 
   _updateBookmarksState() async {
     final newBookmarks = await _database.getBookmarksForAudio(audioId);
-    final newBookmarkTimes = List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
+    final newBookmarkTimes =
+        List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
     setState(() => _bookmarks = newBookmarks);
     setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
   Future<void> _createBookmark(position) async {
     try {
-    await _database.createBookmark(Bookmark(timestamp: position, audioId: audioId));
-    // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
-    setState(() => _addNoteModalOpen = true);
+      await _database
+          .createBookmark(Bookmark(timestamp: position, audioId: audioId));
+      // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
+      setState(() => _addNoteModalOpen = true);
     } catch (e) {}
     _updateBookmarksState();
   }
@@ -278,7 +282,8 @@ class _PlayscreenState extends State<Playscreen> {
                     onPressed: () {
                       int thirtySecsFwd = (_playPosition + 30000.0).toInt();
                       if (thirtySecsFwd >= _duration) {
-                        _audioPlayer.seek(Duration(milliseconds: _duration.toInt()));
+                        _audioPlayer
+                            .seek(Duration(milliseconds: _duration.toInt()));
                         return;
                       }
                       _audioPlayer.seek(Duration(milliseconds: thirtySecsFwd));
@@ -295,38 +300,38 @@ class _PlayscreenState extends State<Playscreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    
                     // SPEED RATE ADJUSTMENT
                     PopupMenuButton<double>(
                       padding: new EdgeInsets.all(0.0),
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<double>>[
                         const PopupMenuItem<double>(
-                            value: 0.5,
-                            child: Text('0.5'),
+                          value: 0.5,
+                          child: Text('0.5'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 0.75,
-                            child: Text('0.75'),
+                          value: 0.75,
+                          child: Text('0.75'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 1.0,
-                            child: Text('1.0'),
+                          value: 1.0,
+                          child: Text('1.0'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 1.5,
-                            child: Text('1.5'),
+                          value: 1.5,
+                          child: Text('1.5'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 2,
-                            child: Text('2'),
+                          value: 2,
+                          child: Text('2'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 2.5,
-                            child: Text('2.5'),
+                          value: 2.5,
+                          child: Text('2.5'),
                         ),
                         const PopupMenuItem<double>(
-                            value: 3.0,
-                            child: Text('3.0'),
+                          value: 3.0,
+                          child: Text('3.0'),
                         ),
                       ],
                       onSelected: (double selectedSpeed) async {
@@ -335,9 +340,11 @@ class _PlayscreenState extends State<Playscreen> {
                           await _audioPlayer.resume();
                           setState(() => _isPlaying = true);
                         }
-                        await _audioPlayer.setPlaybackRate(playbackRate: selectedSpeed);
+                        await _audioPlayer.setPlaybackRate(
+                            playbackRate: selectedSpeed);
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       offset: Offset(20, -352),
                       icon: Icon(
                         Icons.shutter_speed,
@@ -353,12 +360,19 @@ class _PlayscreenState extends State<Playscreen> {
 
                         final sortedBookmarkTimes = _bookmarkTimes;
                         sortedBookmarkTimes.sort();
-                        int prevBookmarkTimeIdx = findNearestBelow(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
-                        final prevBookmarkTime = sortedBookmarkTimes[prevBookmarkTimeIdx];
-                        Bookmark prevBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == prevBookmarkTime).single;
+                        int prevBookmarkTimeIdx = findNearestBelow(
+                            sortedList: sortedBookmarkTimes,
+                            element: _playPosition.toInt());
+                        final prevBookmarkTime =
+                            sortedBookmarkTimes[prevBookmarkTimeIdx];
+                        Bookmark prevBookmark = _bookmarks
+                            .where((bookmark) =>
+                                bookmark.timestamp == prevBookmarkTime)
+                            .single;
 
                         _stop(); // PAUSE
-                        _audioPlayer.seek(Duration(milliseconds: prevBookmark.timestamp));
+                        _audioPlayer.seek(
+                            Duration(milliseconds: prevBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_left,
@@ -373,14 +387,14 @@ class _PlayscreenState extends State<Playscreen> {
                       // if play position is on top of a bookmark position, show the filled bookmark icon
                       // else, show the outlined one
                       icon: currentlyOnBookmark
-                      ? Icon(
-                        Icons.bookmark,
-                        size: 44.0,
-                      )
-                      : Icon(
-                        Icons.bookmark_border,
-                        size: 44.0,
-                      ),
+                          ? Icon(
+                              Icons.bookmark,
+                              size: 44.0,
+                            )
+                          : Icon(
+                              Icons.bookmark_border,
+                              size: 44.0,
+                            ),
                     ),
 
                     // PREVIOUS BOOKMARK LEFT CHEVRON
@@ -392,12 +406,19 @@ class _PlayscreenState extends State<Playscreen> {
                         final sortedBookmarkTimes = _bookmarkTimes;
                         sortedBookmarkTimes.sort();
                         print('sortedBookmarkTimes: $sortedBookmarkTimes');
-                        int nextBookmarkIdx = findNearestAbove(sortedList: sortedBookmarkTimes, element: _playPosition.toInt());
-                        final nextBookmarkTime = sortedBookmarkTimes[nextBookmarkIdx];
-                        Bookmark nextBookmark = _bookmarks.where((bookmark) => bookmark.timestamp == nextBookmarkTime).single;
+                        int nextBookmarkIdx = findNearestAbove(
+                            sortedList: sortedBookmarkTimes,
+                            element: _playPosition.toInt());
+                        final nextBookmarkTime =
+                            sortedBookmarkTimes[nextBookmarkIdx];
+                        Bookmark nextBookmark = _bookmarks
+                            .where((bookmark) =>
+                                bookmark.timestamp == nextBookmarkTime)
+                            .single;
 
                         _stop(); // PAUSE
-                        _audioPlayer.seek(Duration(milliseconds: nextBookmark.timestamp));
+                        _audioPlayer.seek(
+                            Duration(milliseconds: nextBookmark.timestamp));
                       },
                       icon: Icon(
                         Icons.chevron_right,
@@ -408,14 +429,15 @@ class _PlayscreenState extends State<Playscreen> {
                     // SLEEP TIMER
                     PopupMenuButton<int>(
                       padding: new EdgeInsets.all(0.0),
-                      itemBuilder: (BuildContext context) => <PopupMenuEntry<int>>[
+                      itemBuilder: (BuildContext context) =>
+                          <PopupMenuEntry<int>>[
                         const PopupMenuItem<int>(
-                            value: 5,
-                            child: Text('5'),
+                          value: 5,
+                          child: Text('5'),
                         ),
                         const PopupMenuItem<int>(
-                            value: 10,
-                            child: Text('10'),
+                          value: 10,
+                          child: Text('10'),
                         ),
                       ],
                       onSelected: (int sleepTime) async {
@@ -424,7 +446,8 @@ class _PlayscreenState extends State<Playscreen> {
                           await _audioPlayer.pause();
                         });
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       // dx isn't doing naything unless it passes a thresh around 300 where it flies to other side of the screen :(
                       offset: Offset(0, -110),
                       icon: Icon(

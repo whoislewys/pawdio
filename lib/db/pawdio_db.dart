@@ -49,7 +49,7 @@ class PawdioDb {
         try {
           print('create table audio');
           try {
-                      // id INTEGER PRIMARY KEY AUTOINCREMENT,
+            // id INTEGER PRIMARY KEY AUTOINCREMENT,
             await db.execute('''
                   CREATE TABLE IF NOT EXISTS Audios(
                       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -215,7 +215,8 @@ class PawdioDb {
     try {
       var rows;
       await _database.transaction((ctx) async {
-        rows = await ctx.rawQuery('SELECT * FROM Bookmarks B WHERE B.audio_id=$audioId');
+        rows = await ctx
+            .rawQuery('SELECT * FROM Bookmarks B WHERE B.audio_id=$audioId');
       });
       return List<Bookmark>.from(rows.map(((row) => Bookmark.fromRow(row))));
     } catch (e) {

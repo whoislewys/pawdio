@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -292,6 +294,8 @@ class _PlayscreenState extends State<Playscreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    
+                    // SPEED RATE ADJUSTMENT
                     PopupMenuButton<double>(
                       padding: new EdgeInsets.all(0.0),
                       itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
@@ -332,12 +336,15 @@ class _PlayscreenState extends State<Playscreen> {
                         }
                         await _audioPlayer.setPlaybackRate(playbackRate: selectedSpeed);
                       },
-                      shape: const RoundedRectangleBorder(),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      offset: Offset(40, -352),
                       icon: Icon(
                         Icons.shutter_speed,
                         size: 36.0,
                       ),
                     ),
+
+                    // PREVIOUS BOOKMARK LEFT CHEVRON
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
@@ -357,6 +364,8 @@ class _PlayscreenState extends State<Playscreen> {
                         size: 40.0,
                       ),
                     ),
+
+                    // BOOKMARK
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () => _createOrDeleteBookmark(),
@@ -372,6 +381,8 @@ class _PlayscreenState extends State<Playscreen> {
                         size: 44.0,
                       ),
                     ),
+
+                    // PREVIOUS BOOKMARK LEFT CHEVRON
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
                       onPressed: () {
@@ -392,11 +403,28 @@ class _PlayscreenState extends State<Playscreen> {
                         size: 40.0,
                       ),
                     ),
-                    IconButton(
+
+                    // SLEEP TIMER
+                    PopupMenuButton<int>(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () {
-                        print('sleep timer');
+                      itemBuilder: (BuildContext context) => <PopupMenuEntry<int>>[
+                        const PopupMenuItem<int>(
+                            value: 5,
+                            child: Text('5'),
+                        ),
+                        const PopupMenuItem<int>(
+                            value: 10,
+                            child: Text('10'),
+                        ),
+                      ],
+                      onSelected: (int sleepTime) async {
+                        Timer(Duration(minutes: sleepTime), () async {
+                          setState(() => _isPlaying = false);
+                          await _audioPlayer.pause();
+                        });
                       },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      offset: Offset(-306, -110),
                       icon: Icon(
                         Icons.timer,
                         size: 36.0,

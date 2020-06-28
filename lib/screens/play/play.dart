@@ -22,6 +22,7 @@ class Playscreen extends StatefulWidget {
 
 class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
+  // TODO: add modal for taking notes
   bool _addNoteModalOpen = false;
   bool _isPlaying = false;
   double _duration;
@@ -337,7 +338,7 @@ class _PlayscreenState extends State<Playscreen> {
                         await _audioPlayer.setPlaybackRate(playbackRate: selectedSpeed);
                       },
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      offset: Offset(40, -352),
+                      offset: Offset(20, -352),
                       icon: Icon(
                         Icons.shutter_speed,
                         size: 36.0,
@@ -424,7 +425,8 @@ class _PlayscreenState extends State<Playscreen> {
                         });
                       },
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      offset: Offset(-306, -110),
+                      // dx isn't doing naything unless it passes a thresh around 300 where it flies to other side of the screen :(
+                      offset: Offset(0, -110),
                       icon: Icon(
                         Icons.timer,
                         size: 36.0,

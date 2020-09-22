@@ -85,11 +85,11 @@ class _PlayscreenState extends State<Playscreen> {
     await _audioPlayer.stop();
   }
 
-  Future<void> _chooseAndPlayFile() async {
+  // Future<void> _chooseAndPlayFile() async {
     // Open file manager and choose file
-    currentFilePath = await FilePicker.getFilePath();
-    _playFile(currentFilePath);
-  }
+    // currentFilePath = await FilePicker.getFilePath();
+    // _playFile(currentFilePath);
+  // }
 
   /// Setup subscriptions audioPlayer's PlayPosition
   Future<void> _playFile(String filePath) async {
@@ -202,7 +202,7 @@ class _PlayscreenState extends State<Playscreen> {
                         value: 1,
                         child: ListTile(
                           title: Text('Choose File'),
-                          onTap: _chooseAndPlayFile,
+                          onTap: () => print('Choose and PLAY FILE BROKEN!!! Replacing with redux middleware'),
                         ),
                       ),
                     ],

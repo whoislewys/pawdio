@@ -2,7 +2,6 @@
 
 The best podcast and audiobook player in town
 
-
 ## Running locally
 
 ##### Dev Mode

@@ -14,7 +14,7 @@ class PawdioApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // imageCache.clear();
     return StoreProvider(
-        // TODO: maybe need onInit dispatch of a certain action? can't i just do that on whatever screen is first? https://github.com/brianegan/flutter_architecture_samples/blob/master/redux/lib/app.dart#L30
+      // TODO: maybe need onInit dispatch of a certain action? can't i just do that on whatever screen is first? https://github.com/brianegan/flutter_architecture_samples/blob/master/redux/lib/app.dart#L30
       store: store,
       child: MaterialApp(
         title: 'The best audio player in the world',

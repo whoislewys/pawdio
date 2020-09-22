@@ -5,7 +5,8 @@ class Audio {
   Audio({this.filePath, this.lastPosition});
 
   factory Audio.fromRow(Map<String, dynamic> row) {
-    return Audio(filePath: row['file_path'], lastPosition: row['last_position']);
+    return Audio(
+        filePath: row['file_path'], lastPosition: row['last_position']);
   }
 
   Map<String, dynamic> toMap() {

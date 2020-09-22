@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 
-class Config extends InheritedWidget{
+class Config extends InheritedWidget {
   final String appName;
   final String flavor;
 
@@ -9,9 +9,7 @@ class Config extends InheritedWidget{
     @required this.appName,
     @required this.flavor,
     @required Widget child,
-    }) : 
-    super(child: child);
-
+  }) : super(child: child);
 
   static Config of(BuildContext ctx) {
     return ctx.inheritFromWidgetOfExactType(Config);

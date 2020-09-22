@@ -30,7 +30,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   Future<void> _navigateToPlayscreenAndPlayFile(
       BuildContext ctx, String filePath, int audioId) async {
-    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath, audioId: audioId)));
+    Navigator.push(
+        ctx,
+        MaterialPageRoute(
+            builder: (context) =>
+                Playscreen(currentFilePath: filePath, audioId: audioId)));
   }
 
   Future<void> _chooseAndPlayFile(BuildContext ctx) async {
@@ -40,7 +44,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       print('ERROR: Null file was chosen');
       return;
     }
-    
+
     List<Map<String, dynamic>> audioResult =
         await _database.queryAudioForFilePath(chosenFilePath);
 
@@ -48,11 +52,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
       // if file has not been chosen before, create record for it in DB
       await _database.createAudio(chosenFilePath);
       final newAudios = await _database.getAllAudios();
-      setState(() { _audios = newAudios; });
+      setState(() {
+        _audios = newAudios;
+      });
       audioResult = await _database.queryAudioForFilePath(chosenFilePath);
     }
-    
-    _navigateToPlayscreenAndPlayFile(ctx, chosenFilePath, audioResult[0]['rowid']);
+
+    _navigateToPlayscreenAndPlayFile(
+        ctx, chosenFilePath, audioResult[0]['rowid']);
   }
 
   @override
@@ -85,32 +92,32 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 style: Theme.of(context).textTheme.title,
               ),
               FutureBuilder(
-                future: _hydrateAudio(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    return Expanded(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _audios.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          String audioFilePath = _audios[index]['file_path'];
-                          int audioId = _audios[index]['id'];
-                          print('audio id: $audioId');
+                  future: _hydrateAudio(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.done) {
+                      return Expanded(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _audios.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            String audioFilePath = _audios[index]['file_path'];
+                            int audioId = _audios[index]['id'];
+                            print('audio id: $audioId');
 
-                          return ListTile(
-                            onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath, audioId),
-                            title: Text(
-                              getFileNameFromFilePath(audioFilePath),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-              }),
+                            return ListTile(
+                              onTap: () => _navigateToPlayscreenAndPlayFile(
+                                  context, audioFilePath, audioId),
+                              title: Text(
+                                getFileNameFromFilePath(audioFilePath),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    } else {
+                      return CircularProgressIndicator();
+                    }
+                  }),
             ],
           ),
         ),

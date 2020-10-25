@@ -4,9 +4,12 @@ import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
+import 'package:pawdio/redux/library/actions.dart';
+import 'package:redux/redux.dart';
 
 class LibraryScreen extends StatefulWidget {
-  LibraryScreen({Key key}) : super(key: key);
+  final Store store;
+  LibraryScreen({Key key, @required this.store}) : super(key: key,);
 
   @override
   _LibraryScreenState createState() => _LibraryScreenState();
@@ -19,12 +22,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
-    _hydrateAudio();
+    // _hydrateAudio();
+    HydrateAudios(widget.store);
+    // Redux.store.dispatch(AddAudioAction())
   }
 
   Future<void> _hydrateAudio() async {
-    _database = await PawdioDb.create();
+    // _database = await PawdioDb.create();
     _audios = await _database.getAllAudios();
+    if (_audios.length == 0) {
+      print('no audios');
+      // TODO: set state of button on screen to allow you to choose file more easily
+    }
     return;
   }
 
@@ -65,7 +74,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+      body: 
+      Center(
         child: SafeArea(
           child: Column(
             children: <Widget>[

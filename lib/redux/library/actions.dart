@@ -8,14 +8,13 @@ class AddAudioAction {
   AddAudioAction(this.audio);
 }
 
-addAudio(Store<PawdioState> store, Audio audio) {
+addAudio(Store<AppState> store, Audio audio) {
   store.dispatch(AddAudioAction(audio));
 }
 
+class HydrateAudiosAction {}
 
-class HydrateAudiosAction{}
-
-void HydrateAudios(Store<PawdioState> store) {
+void HydrateAudios(Store<AppState> store) {
   // only used to trigger async hydrateAudios middleware
   store.dispatch(HydrateAudiosAction());
 }

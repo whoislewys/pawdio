@@ -7,15 +7,15 @@ import 'package:pawdio/redux/library/reducers.dart';
 
 // Adapted from https://github.com/brianegan/flutter_architecture_samples/blob/master/redux/lib/reducers/app_state_reducer.dart
 // We create the State reducer by combining many smaller reducers into one!
-PawdioState appReducer(PawdioState state, action) {
-  return PawdioState(
+AppState appReducer(AppState state, action) {
+  return AppState(
     audios: audiosReducer(state.audios, action),
   );
 }
 
 // adapted from https://github.com/brianegan/flutter_architecture_samples/blob/master/redux/lib/main.dart
-final store = Store<PawdioState>(
+final store = Store<AppState>(
   appReducer,
-  initialState: PawdioState(),
+  initialState: AppState(),
   middleware: [],
 );

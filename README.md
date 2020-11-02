@@ -13,3 +13,5 @@ and visit the url: `chrome://inspect/#devices`
 ##### Release Mode
 To run locally without any dev dependencies, run
 `flutter run -t lib/main_prod.dart`
+
+#### Format

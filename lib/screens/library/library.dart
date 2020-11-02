@@ -1,15 +1,15 @@
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/app_state.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
 import 'package:pawdio/redux/library/actions.dart';
-import 'package:redux/redux.dart';
 
 class LibraryScreen extends StatefulWidget {
-  final Store store;
-  LibraryScreen({Key key, @required this.store}) : super(key: key,);
+  LibraryScreen({Key key}) : super(key: key);
 
   @override
   _LibraryScreenState createState() => _LibraryScreenState();
@@ -22,13 +22,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   void initState() {
     super.initState();
-    // _hydrateAudio();
-    HydrateAudios(widget.store);
+    _hydrateAudio();
     // Redux.store.dispatch(AddAudioAction())
   }
 
   Future<void> _hydrateAudio() async {
-    // _database = await PawdioDb.create();
+    _database = await PawdioDb.create();
     _audios = await _database.getAllAudios();
     if (_audios.length == 0) {
       print('no audios');
@@ -73,65 +72,74 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: 
-      Center(
-        child: SafeArea(
-          child: Column(
-            children: <Widget>[
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: EdgeInsets.only(right: 16.0),
-                  child: PopupMenuButton(
-                    icon: Icon(Icons.more_vert, size: 34.0),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 1,
-                        child: ListTile(
-                          title: Text('Choose File'),
-                          onTap: () => _chooseAndPlayFile(context),
-                        ),
+    return StoreConnector<AppState, Function>(
+      converter: (store) {
+        print('store.state.audios: ${store.state.audios}');
+        HydrateAudios(store);
+        return;
+      },
+      builder: (context, audios) {
+        return Scaffold(
+          body: Center(
+            child: SafeArea(
+              child: Column(
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: EdgeInsets.only(right: 16.0),
+                      child: PopupMenuButton(
+                        icon: Icon(Icons.more_vert, size: 34.0),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 1,
+                            child: ListTile(
+                              title: Text('Choose File'),
+                              onTap: () => _chooseAndPlayFile(context),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              Text(
-                'Library',
-                style: Theme.of(context).textTheme.title,
-              ),
-              FutureBuilder(
-                  future: _hydrateAudio(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.done) {
-                      return Expanded(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _audios.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            String audioFilePath = _audios[index]['file_path'];
-                            int audioId = _audios[index]['id'];
-                            print('audio id: $audioId');
+                  Text(
+                    'Library',
+                    style: Theme.of(context).textTheme.title,
+                  ),
+                  FutureBuilder(
+                      future: _hydrateAudio(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.done) {
+                          return Expanded(
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _audios.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                String audioFilePath =
+                                    _audios[index]['file_path'];
+                                int audioId = _audios[index]['id'];
+                                print('audio id: $audioId');
 
-                            return ListTile(
-                              onTap: () => _navigateToPlayscreenAndPlayFile(
-                                  context, audioFilePath, audioId),
-                              title: Text(
-                                getFileNameFromFilePath(audioFilePath),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    } else {
-                      return CircularProgressIndicator();
-                    }
-                  }),
-            ],
+                                return ListTile(
+                                  onTap: () => _navigateToPlayscreenAndPlayFile(
+                                      context, audioFilePath, audioId),
+                                  title: Text(
+                                    getFileNameFromFilePath(audioFilePath),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        } else {
+                          return CircularProgressIndicator();
+                        }
+                      }),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

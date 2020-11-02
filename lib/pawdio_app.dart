@@ -14,15 +14,12 @@ class PawdioApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // imageCache.clear();
-    return StoreProvider<PawdioState>(
+    return StoreProvider<AppState>(
       store: store,
       child: MaterialApp(
         title: 'The best audio player in the world',
-        home: LibraryScreen(
-            // TODO: figure out how to actually use this store
-          store: StoreProvider.of<PawdioState>(context),
-            ),
         theme: ThemeData.dark(),
+        home: LibraryScreen(),
       ),
     );
   }

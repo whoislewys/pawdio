@@ -16,24 +16,24 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  List<Map<String, dynamic>> _audios;
+  // List<Map<String, dynamic>> _audios;
   PawdioDb _database;
 
   @override
   void initState() {
     super.initState();
-    _hydrateAudio();
-    // Redux.store.dispatch(AddAudioAction())
+    // _hydrateAudio();
   }
 
   Future<void> _hydrateAudio() async {
-    _database = await PawdioDb.create();
-    _audios = await _database.getAllAudios();
-    if (_audios.length == 0) {
-      print('no audios');
-      // TODO: set state of button on screen to allow you to choose file more easily
-    }
     return;
+    // _database = await PawdioDb.create();
+    // _audios = await _database.getAllAudios();
+    // if (_audios.length == 0) {
+    //   print('no audios');
+    //   // TODO: set state of button on screen to allow you to choose file more easily
+    // }
+    // return;
   }
 
   Future<void> _navigateToPlayscreenAndPlayFile(
@@ -75,7 +75,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return StoreConnector<AppState, Function>(
       converter: (store) {
         print('store.state.audios: ${store.state.audios}');
-        HydrateAudios(store);
+        store.dispatch(HydrateAudiosAction());
         return;
       },
       builder: (context, audios) {
@@ -113,6 +113,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           return Expanded(
                             child: ListView.builder(
                               shrinkWrap: true,
+                              // TODO: make store.state.audios the source of truth for audios
                               itemCount: _audios.length,
                               itemBuilder: (BuildContext context, int index) {
                                 String audioFilePath =

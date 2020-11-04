@@ -1,4 +1,5 @@
 import 'package:path/path.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/models/note.dart';
 import 'package:sqflite/sqflite.dart';
@@ -120,26 +121,38 @@ class PawdioDb {
 // ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████║
 // ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝
 
-  Future<List<Map<String, dynamic>>> queryAudioForFilePath(
-      String filePath) async {
+  Future<Audio> getAudioByFilePath(String filePath) async {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
         return ctx
             .rawQuery('SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
       });
-      return res;
+      List<Audio> audios = res.map((row) => Audio.fromRow(row));
+      if (audios.length == 1) {
+        return audios.first;
+      } else if (audios.length > 1) {
+        print('Warning: more than 1 audio found for file path $filePath');
+        return audios.first;
+      } else if (audios.length == 0) {
+        return null;
+      } else {
+        print(
+            'Error: Negative amount of audios found for filepath $filePath. WTF did you do?');
+        return null;
+      }
     } catch (e) {
       print('this bitch ass query empty yeet. error: $e');
-      return [];
+      return null;
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAllAudios() async {
+  Future<List<Audio>> getAllAudios() async {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
         return ctx.rawQuery('SELECT * FROM Audios');
       });
-      return res;
+      List<Audio> audios = res.map((row) => Audio.fromRow(row));
+      return audios;
     } catch (e) {
       print('Error getting all audios. error: $e');
       return [];

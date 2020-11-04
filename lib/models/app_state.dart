@@ -9,6 +9,9 @@ class AppState {
   /// The audios currently available within the app
   final List<Audio> audios;
 
+  /// Currently selected audio
+  final Audio currentAudio;
+
   /// The bookmarks for the currently playing audio
   final List<Bookmark> bookmarks;
 
@@ -17,11 +20,19 @@ class AppState {
 
   AppState({
     this.audios = const [],
+    this.currentAudio = const Audio.emptyAudio(),
     this.bookmarks = const [],
   });
 
   @override
   String toString() {
-    return 'AppState{audios: $audios, bookmarks: $bookmarks}';
+    return '''
+
+        AppState{
+          audios: $audios,
+          currentAudio: $currentAudio,
+          bookmarks: $bookmarks,
+        }
+    ''';
   }
 }

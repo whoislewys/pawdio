@@ -12,6 +12,9 @@ class Audio {
         id: row['id']);
   }
 
+  const Audio.emptyAudio(
+      {this.filePath: '', this.lastPosition: -1, this.id: -1});
+
   Map<String, dynamic> toMap() {
     return {
       'file_path': filePath,

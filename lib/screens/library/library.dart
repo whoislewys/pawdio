@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/models/app_state.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
 import 'package:pawdio/redux/library/actions.dart';
@@ -46,39 +47,40 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   Future<void> _chooseAndPlayFile(BuildContext ctx) async {
+    // TODO: make werk with redux
     // Open file manager and choose file
-    var chosenFilePath = await FilePicker.getFilePath();
-    if (chosenFilePath == null) {
-      print('ERROR: Null file was chosen');
-      return;
-    }
+    // var chosenFilePath = await FilePicker.getFilePath();
+    // if (chosenFilePath == null) {
+    //   print('ERROR: Null file was chosen');
+    //   return;
+    // }
 
-    List<Map<String, dynamic>> audioResult =
-        await _database.queryAudioForFilePath(chosenFilePath);
+    // List<Map<String, dynamic>> audioResult =
+    //     await _database.queryAudioForFilePath(chosenFilePath);
 
-    if (audioResult.isEmpty) {
-      // if file has not been chosen before, create record for it in DB
-      await _database.createAudio(chosenFilePath);
-      final newAudios = await _database.getAllAudios();
-      setState(() {
-        _audios = newAudios;
-      });
-      audioResult = await _database.queryAudioForFilePath(chosenFilePath);
-    }
+    // if (audioResult.isEmpty) {
+    //   // if file has not been chosen before, create record for it in DB
+    //   await _database.createAudio(chosenFilePath);
+    //   final newAudios = await _database.getAllAudios();
+    // setState(() {
+    // _audios = newAudios;
+    // });
+    // audioResult = await _database.queryAudioForFilePath(chosenFilePath);
+    // }
 
-    _navigateToPlayscreenAndPlayFile(
-        ctx, chosenFilePath, audioResult[0]['rowid']);
+    // _navigateToPlayscreenAndPlayFile(
+    //     ctx, chosenFilePath, audioResult[0]['rowid']);
   }
 
   @override
   Widget build(BuildContext context) {
-    return StoreConnector<AppState, Function>(
+    return StoreConnector<AppState, List<Audio>>(
       converter: (store) {
-        print('store.state.audios: ${store.state.audios}');
         store.dispatch(HydrateAudiosAction());
-        return;
+        return store.state.audios;
       },
       builder: (context, audios) {
+        print('audios: ${audios}');
         return Scaffold(
           body: Center(
             child: SafeArea(
@@ -114,11 +116,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             child: ListView.builder(
                               shrinkWrap: true,
                               // TODO: make store.state.audios the source of truth for audios
-                              itemCount: _audios.length,
+                              itemCount: audios.length,
                               itemBuilder: (BuildContext context, int index) {
-                                String audioFilePath =
-                                    _audios[index]['file_path'];
-                                int audioId = _audios[index]['id'];
+                                String audioFilePath = audios[index].filePath;
+                                int audioId = audios[index].id;
                                 print('audio id: $audioId');
 
                                 return ListTile(

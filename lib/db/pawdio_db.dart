@@ -7,25 +7,30 @@ import 'package:sqflite/sqflite.dart';
 class PawdioDb {
   static final _databaseName = 'PawdioDatabase.db';
   static final _databaseVersion = 1;
+  static PawdioDb _instance;
   Database _database;
 
   // Singleton pattern using private constructor so only one PawdioDb exists throughout whole app
   PawdioDb._privateConstructor() {
-    print(' private constructor ');
+    print('private constructor');
   }
+
   static Future<PawdioDb> create() async {
-    PawdioDb pawdioDb = PawdioDb._privateConstructor();
-    await pawdioDb.setupDb();
-    // await pawdioDb.deleteDB();
-    return pawdioDb;
+    print('calling getInstance');
+    if (_instance != null) {
+      // ensure that setup only gets called once
+      print('instance already exists, retruning');
+      return _instance;
+    } else {
+      print('***creating DB singleton***');
+      _instance = PawdioDb._privateConstructor();
+      await _instance.setupDb();
+      // await _instance.deleteDB();
+      return _instance;
+    }
   }
 
   Future<void> setupDb() async {
-    if (_database != null) {
-      // ensure that setup only gets called once
-      return;
-    }
-
     print('\n****Setting up DB****\n');
     var databasesPath =
         await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases

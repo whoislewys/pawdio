@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 import 'package:pawdio/utils/util.dart';
@@ -116,10 +117,9 @@ class _PlayscreenState extends State<Playscreen> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    List<Map<String, dynamic>> audioResult =
-        await _database.queryAudioForFilePath(filePath);
-    if (audioResult.isNotEmpty) {
-      int previousPosition = audioResult.first['last_position'];
+    Audio audio = await _database.getAudioByFilePath(filePath);
+    if (audio != null) {
+      int previousPosition = audio.lastPosition;
       _audioPlayer.seek(Duration(milliseconds: previousPosition));
     }
 

@@ -8,7 +8,7 @@ import 'package:pawdio/redux/library/middlewares.dart';
 AppState appReducer(AppState state, action) {
   return AppState(
     audios: audiosReducer(state.audios, action),
-    currentAudio: currentAudioReducer(state.currentAudio, action),
+    currentAudioPath: currentAudioReducer(state.currentAudioPath, action),
   );
 }
 

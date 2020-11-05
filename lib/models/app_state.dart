@@ -10,7 +10,7 @@ class AppState {
   final List<Audio> audios;
 
   /// Currently selected audio
-  final Audio currentAudio;
+  final String currentAudioPath;
 
   /// The bookmarks for the currently playing audio
   final List<Bookmark> bookmarks;
@@ -20,7 +20,7 @@ class AppState {
 
   AppState({
     this.audios = const [],
-    this.currentAudio = const Audio.emptyAudio(),
+    this.currentAudioPath = '',
     this.bookmarks = const [],
   });
 
@@ -30,7 +30,7 @@ class AppState {
 
         AppState{
           audios: $audios,
-          currentAudio: $currentAudio,
+          currentAudioPath: $currentAudioPath,
           bookmarks: $bookmarks,
         }
     ''';

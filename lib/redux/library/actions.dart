@@ -18,6 +18,6 @@ class CreateAudioAction {
 }
 
 class SetCurrentAudioAction {
-  final Audio newCurrentAudio;
-  SetCurrentAudioAction(this.newCurrentAudio);
+  final String newCurrentAudioPath;
+  SetCurrentAudioAction(this.newCurrentAudioPath);
 }

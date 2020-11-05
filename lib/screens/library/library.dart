@@ -8,6 +8,7 @@ import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
 import 'package:pawdio/redux/library/actions.dart';
+import 'package:redux/redux.dart';
 
 class LibraryScreen extends StatefulWidget {
   LibraryScreen({Key key}) : super(key: key);
@@ -46,7 +47,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 Playscreen(currentFilePath: filePath, audioId: audioId)));
   }
 
-  Future<void> _chooseAndPlayFile(BuildContext ctx) async {
+  Future<void> _chooseAndPlayFile(
+      BuildContext ctx, Store<AppState> store) async {
     // Open file manager and choose file
     var chosenFilePath = await FilePicker.getFilePath();
     if (chosenFilePath == null) {
@@ -56,84 +58,92 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     // TODO: make werk with redux
     // TODO: create audio in redux middleware instead of call db directly
-    // createAudio();
+    store.dispatch(CreateAudioAction(chosenFilePath));
 
     // TODO: set current audio, instead of hacky navigate & play function
-    // setCurrentAudio()
-    // navigateToPlayScreen()
+    store.dispatch(SetCurrentAudioAction(chosenFilePath));
+    // _navigateToPlayScreen();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    // TODO: break out ubild method to have multiple storeconnectors for loading audios and adding new audios
+    // return StoreConnector<AppState, List<Audio>>(
+    //   converter: (Store<AppState> store) {
+    //     store.dispatch(HydrateAudiosAction());
+    //     return store.state.audios;
+    //   },
+    //   builder: (context, audios) {
+    //     return Container(width: 0, height: 0);
+    return Scaffold(
+      body: Center(
+        child: SafeArea(
+          child: Column(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: StoreConnector<AppState, Store<AppState>>(
+                    converter: (Store<AppState> store) {
+                      store.dispatch(HydrateAudiosAction());
+                      return store;
+                    },
+                    builder: (context, store) {
+                      // return Container(width: 0, height: 0);
+                      return PopupMenuButton(
+                        icon: Icon(Icons.more_vert, size: 34.0),
+                        // TODO: StoreConnector here for createAudio
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 1,
+                            child: ListTile(
+                              title: Text('Choose File'),
+                              // onTap: () => _chooseAndPlayFile(context, store),
+                              onTap: () => print('noop'),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Text(
+                'Library',
+                style: Theme.of(context).textTheme.headline6,
+              ),
+              StoreConnector<AppState, List<Audio>>(
+                  converter: (Store<AppState> store) {
+                store.dispatch(HydrateAudiosAction());
+                return store.state.audios;
+              }, builder: (context, audios) {
+                return Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: audios.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      String audioFilePath = audios[index].filePath;
+                      int audioId = audios[index].id;
+                      print('audio id: $audioId');
 
-@override
-Widget build(BuildContext context) {
-  return StoreConnector<AppState, List<Audio>>(
-    converter: (store) {
-      store.dispatch(HydrateAudiosAction());
-      return store.state.audios;
-    },
-    builder: (context, audios) {
-      return Container(width: 0, height: 0);
-      // return Scaffold(
-      //   body: Center(
-      //     child: SafeArea(
-      //       child: Column(
-      //         children: <Widget>[
-      //           Align(
-      //             alignment: Alignment.topRight,
-      //             child: Padding(
-      //               padding: EdgeInsets.only(right: 16.0),
-      //               child: PopupMenuButton(
-      //                 icon: Icon(Icons.more_vert, size: 34.0),
-      //                 itemBuilder: (context) => [
-      //                   PopupMenuItem(
-      //                     value: 1,
-      //                     child: ListTile(
-      //                       title: Text('Choose File'),
-      //                       onTap: () => _chooseAndPlayFile(context),
-      //                     ),
-      //                   ),
-      //                 ],
-      //               ),
-      //             ),
-      //           ),
-      //           Text(
-      //             'Library',
-      //             style: Theme.of(context).textTheme.title,
-      //           ),
-      //           FutureBuilder(
-      //               future: _hydrateAudio(),
-      //               builder: (context, snapshot) {
-      //                 if (snapshot.connectionState == ConnectionState.done) {
-      //                   return Expanded(
-      //                     child: ListView.builder(
-      //                       shrinkWrap: true,
-      //                       // TODO: make store.state.audios the source of truth for audios
-      //                       itemCount: audios.length,
-      //                       itemBuilder: (BuildContext context, int index) {
-      //                         String audioFilePath = audios[index].filePath;
-      //                         int audioId = audios[index].id;
-      //                         print('audio id: $audioId');
-
-      //                         return ListTile(
-      //                           onTap: () => _navigateToPlayscreenAndPlayFile(
-      //                               context, audioFilePath, audioId),
-      //                           title: Text(
-      //                             getFileNameFromFilePath(audioFilePath),
-      //                           ),
-      //                         );
-      //                       },
-      //                     ),
-      //                   );
-      //                 } else {
-      //                   return CircularProgressIndicator();
-      //                 }
-      //               }),
-      //         ],
-      //       ),
-      //     ),
-      //   ),
-      // );
-    },
-  );
-}
+                      return ListTile(
+                        onTap: () => _navigateToPlayscreenAndPlayFile(
+                            context, audioFilePath, audioId),
+                        title: Text(
+                          getFileNameFromFilePath(audioFilePath),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+    // },
+    // );
+  }
 }

@@ -8,14 +8,22 @@ import 'package:redux/redux.dart';
 Future<void> hydrateAudiosMiddleware(
     Store<AppState> store, action, NextDispatcher next) async {
   if (action is HydrateAudiosAction) {
-    final database =
-        await PawdioDb.create(); // should get instance, not create anew
-    List<Audio> audios = await database.getAllAudios();
-    if (audios.length == 0) {
-      print('no audios');
+    try {
+      final database = await PawdioDb.create();
+      try {
+        List<Audio> audios = await database.getAllAudios();
+
+        if (audios.length == 0) {
+          print('no audios');
+        }
+        print('got audios in mware: $audios');
+        store.dispatch(AddAudiosAction(audios));
+      } catch(e) {
+        print('error getting all audios: $e') ;
+      }
+    } catch(e) {
+      print('error getting db instance: $e');
     }
-    print('got audios in mware: $audios');
-    store.dispatch(AddAudiosAction(audios));
   }
   next(action);
 }

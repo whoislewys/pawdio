@@ -7,7 +7,6 @@ import 'package:redux/redux.dart';
 // Fill store.state.audios with all the cur user's audios
 Future<void> hydrateAudiosMiddleware(
     Store<AppState> store, action, NextDispatcher next) async {
-  next(action);
   if (action is HydrateAudiosAction) {
     final database =
         await PawdioDb.create(); // should get instance, not create anew
@@ -18,12 +17,12 @@ Future<void> hydrateAudiosMiddleware(
     print('got audios in mware: $audios');
     store.dispatch(AddAudiosAction(audios));
   }
+  next(action);
 }
 
 // Add a new audio from a file path to the user's library
 Future<void> createAudioMiddleware(
     Store<AppState> store, action, NextDispatcher next) async {
-  next(action);
   if (action is CreateAudioAction) {
     final database = await PawdioDb.create();
     Audio audioResult = await database.getAudioByFilePath(action.filePath);
@@ -37,4 +36,5 @@ Future<void> createAudioMiddleware(
       store.dispatch(AddAudiosAction([newAudio]));
     }
   }
+  next(action);
 }

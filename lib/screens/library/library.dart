@@ -86,14 +86,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   padding: EdgeInsets.only(right: 16.0),
                   child: StoreConnector<AppState, Store<AppState>>(
                     converter: (Store<AppState> store) {
-                      store.dispatch(HydrateAudiosAction());
                       return store;
+                    },
+                    onInit: (Store<AppState> store) {
+                      store.dispatch(HydrateAudiosAction());
                     },
                     builder: (context, store) {
                       // return Container(width: 0, height: 0);
                       return PopupMenuButton(
                         icon: Icon(Icons.more_vert, size: 34.0),
-                        // TODO: StoreConnector here for createAudio
                         itemBuilder: (context) => [
                           PopupMenuItem(
                             value: 1,

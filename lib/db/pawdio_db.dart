@@ -32,9 +32,13 @@ class PawdioDb {
 
   Future<void> setupDb() async {
     print('\n****Setting up DB****\n');
-    var databasesPath =
-        await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
-    print('databasesPath: $databasesPath');
+    var databasesPath = '';
+    try {
+      databasesPath = await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
+      print('got databases path: $databasesPath');
+    } catch (e) {
+      print('Error getting db path: $e');
+    }
     String path = join(databasesPath, _databaseName);
 
     try {

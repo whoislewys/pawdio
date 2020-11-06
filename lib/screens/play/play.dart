@@ -56,7 +56,7 @@ class _PlayscreenState extends State<Playscreen> {
     audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _database = await PawdioDb.create();
+      // _database = await PawdioDb.create();
       await _initBookmarkTimes();
     });
 

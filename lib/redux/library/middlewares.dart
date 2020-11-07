@@ -18,10 +18,10 @@ Future<void> hydrateAudiosMiddleware(
         }
         print('got audios in mware: $audios');
         store.dispatch(AddAudiosAction(audios));
-      } catch(e) {
-        print('error getting all audios: $e') ;
+      } catch (e) {
+        print('error getting all audios: $e');
       }
-    } catch(e) {
+    } catch (e) {
       print('error getting db instance: $e');
     }
   }
@@ -35,8 +35,8 @@ Future<void> createAudioMiddleware(
     final database = await PawdioDb.create();
     Audio audioResult = await database.getAudioByFilePath(action.filePath);
 
-    if (audioResult != null) {
-      // create entry in DB
+    if (audioResult == null) {
+      // If audio not found, create entry in DB
       await database.createAudio(action.filePath);
       // get the entry we just made
       Audio newAudio = await database.getAudioByFilePath(action.filePath);

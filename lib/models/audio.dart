@@ -27,9 +27,10 @@ class Audio {
   String toString() {
     return '''
 
-        Audio
-        filePath: ${this.filePath}
-        last_position: ${this.lastPosition}
-        id: ${this.id}''';
+    Audio.
+    filePath: ${this.filePath}
+    last_position: ${this.lastPosition}
+    id: ${this.id}
+    ''';
   }
 }

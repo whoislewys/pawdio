@@ -136,7 +136,9 @@ class PawdioDb {
         return ctx
             .rawQuery('SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
       });
-      List<Audio> audios = res.map((row) => Audio.fromRow(row));
+
+      List<Audio> audios =
+          List<Audio>.from(res.map((row) => Audio.fromRow(row)));
       if (audios.length == 1) {
         return audios.first;
       } else if (audios.length > 1) {
@@ -160,7 +162,8 @@ class PawdioDb {
       var res = await _database.transaction((ctx) async {
         return ctx.rawQuery('SELECT * FROM Audios');
       });
-      List<Audio> audios = List<Audio>.from(res.map((row) => Audio.fromRow(row)));
+      List<Audio> audios =
+          List<Audio>.from(res.map((row) => Audio.fromRow(row)));
       return audios;
     } catch (e) {
       print('Error getting all audios. error: $e');
@@ -170,13 +173,10 @@ class PawdioDb {
 
   Future<void> createAudio(filePath) async {
     print('Inserting!');
-    Map<String, dynamic> row = {
-      'file_path': filePath,
-      'last_position': 0,
-    };
+    final audio = Audio(filePath: filePath, lastPosition: 0);
 
     await _database.transaction((ctx) async {
-      await ctx.insert('Audios', row);
+      await ctx.insert('Audios', audio.toMap());
     });
   }
 

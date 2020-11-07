@@ -19,8 +19,9 @@ class Bookmark {
   String toString() {
     return '''
 
-        Bookmark
-        timestamp: ${this.timestamp}
-        audio_id: ${this.audioId}''';
+    Bookmark
+    timestamp: ${this.timestamp}
+    audio_id: ${this.audioId}
+    ''';
   }
 }

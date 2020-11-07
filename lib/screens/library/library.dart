@@ -56,11 +56,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
       return;
     }
 
-    // TODO: make werk with redux
-    // TODO: create audio in redux middleware instead of call db directly
     store.dispatch(CreateAudioAction(chosenFilePath));
 
-    // TODO: set current audio, instead of hacky navigate & play function
     store.dispatch(SetCurrentAudioAction(chosenFilePath));
     // _navigateToPlayScreen();
   }
@@ -113,29 +110,30 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               StoreConnector<AppState, List<Audio>>(
                   converter: (Store<AppState> store) {
-                return store.state.audios;
-              }, 
-              onInit: (Store<AppState> store) => store.dispatch(HydrateAudiosAction()),
-              builder: (context, audios) {
-                return Expanded(
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: audios.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      String audioFilePath = audios[index].filePath;
-                      int audioId = audios[index].id;
+                    return store.state.audios;
+                  },
+                  onInit: (Store<AppState> store) =>
+                      store.dispatch(HydrateAudiosAction()),
+                  builder: (context, audios) {
+                    return Expanded(
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: audios.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          String audioFilePath = audios[index].filePath;
+                          int audioId = audios[index].id;
 
-                      return ListTile(
-                        onTap: () => _navigateToPlayscreenAndPlayFile(
-                            context, audioFilePath, audioId),
-                        title: Text(
-                          getFileNameFromFilePath(audioFilePath),
-                        ),
-                      );
-                    },
-                  ),
-                );
-              }),
+                          return ListTile(
+                            onTap: () => _navigateToPlayscreenAndPlayFile(
+                                context, audioFilePath, audioId),
+                            title: Text(
+                              getFileNameFromFilePath(audioFilePath),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  }),
             ],
           ),
         ),

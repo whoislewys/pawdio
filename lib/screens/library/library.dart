@@ -18,26 +18,6 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  // List<Map<String, dynamic>> _audios;
-  PawdioDb _database;
-
-  @override
-  void initState() {
-    super.initState();
-    // _hydrateAudio();
-  }
-
-  Future<void> _hydrateAudio() async {
-    return;
-    // _database = await PawdioDb.create();
-    // _audios = await _database.getAllAudios();
-    // if (_audios.length == 0) {
-    //   print('no audios');
-    //   // TODO: set state of button on screen to allow you to choose file more easily
-    // }
-    // return;
-  }
-
   Future<void> _navigateToPlayscreenAndPlayFile(
       BuildContext ctx, String filePath, int audioId) async {
     Navigator.push(
@@ -59,19 +39,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
     store.dispatch(CreateAudioAction(chosenFilePath));
 
     store.dispatch(SetCurrentAudioAction(chosenFilePath));
-    // _navigateToPlayScreen();
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO: break out ubild method to have multiple storeconnectors for loading audios and adding new audios
-    // return StoreConnector<AppState, List<Audio>>(
-    //   converter: (Store<AppState> store) {
-    //     store.dispatch(HydrateAudiosAction());
-    //     return store.state.audios;
-    //   },
-    //   builder: (context, audios) {
-    //     return Container(width: 0, height: 0);
     return Scaffold(
       body: Center(
         child: SafeArea(
@@ -94,7 +65,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           PopupMenuItem(
                             value: 1,
                             child: ListTile(
-                              title: Text('Choose File'),
+                              title: Text('Add audio'),
                               onTap: () => _chooseAndPlayFile(context, store),
                             ),
                           ),

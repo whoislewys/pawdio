@@ -26,7 +26,7 @@ List<Audio> _createAudio(List<Audio> audios, CreateAudioAction action) {
 
 /// CURRENT PLAYING AUDIO REDUCER
 final currentAudioReducer =
-    TypedReducer<String, SetCurrentAudioAction>(_setCurrentAudio);
-String _setCurrentAudio(String audio, SetCurrentAudioAction action) {
-  return action.newCurrentAudioPath;
+    TypedReducer<Audio, SetCurrentAudioAction>(_setCurrentAudio);
+Audio _setCurrentAudio(Audio audio, SetCurrentAudioAction action) {
+  return action.newCurrentAudio;
 }

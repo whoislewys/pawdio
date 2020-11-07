@@ -84,12 +84,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: StoreConnector<AppState, Store<AppState>>(
+                  // todo: replace 2nd type arg with actual viewmodel probably
+                  child: StoreConnector<AppState, Store>(
                     converter: (Store<AppState> store) {
                       return store;
-                    },
-                    onInit: (Store<AppState> store) {
-                      store.dispatch(HydrateAudiosAction());
                     },
                     builder: (context, store) {
                       // return Container(width: 0, height: 0);
@@ -100,8 +98,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             value: 1,
                             child: ListTile(
                               title: Text('Choose File'),
-                              // onTap: () => _chooseAndPlayFile(context, store),
-                              onTap: () => print('noop'),
+                              onTap: () => _chooseAndPlayFile(context, store),
                             ),
                           ),
                         ],
@@ -116,9 +113,10 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
               StoreConnector<AppState, List<Audio>>(
                   converter: (Store<AppState> store) {
-                store.dispatch(HydrateAudiosAction());
                 return store.state.audios;
-              }, builder: (context, audios) {
+              }, 
+              onInit: (Store<AppState> store) => store.dispatch(HydrateAudiosAction()),
+              builder: (context, audios) {
                 return Expanded(
                   child: ListView.builder(
                     shrinkWrap: true,
@@ -126,7 +124,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     itemBuilder: (BuildContext context, int index) {
                       String audioFilePath = audios[index].filePath;
                       int audioId = audios[index].id;
-                      print('audio id: $audioId');
 
                       return ListTile(
                         onTap: () => _navigateToPlayscreenAndPlayFile(

@@ -2,7 +2,6 @@ import 'package:flutter_redux/flutter_redux.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:pawdio/db/pawdio_db.dart';
 import 'package:pawdio/models/app_state.dart';
 import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/screens/play/play.dart';
@@ -19,12 +18,9 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _navigateToPlayscreenAndPlayFile(
-      BuildContext ctx, String filePath, int audioId) async {
-    Navigator.push(
-        ctx,
-        MaterialPageRoute(
-            builder: (context) =>
-                Playscreen(currentFilePath: filePath, audioId: audioId)));
+      BuildContext ctx, int audioId) async {
+    Navigator.push(ctx,
+        MaterialPageRoute(builder: (context) => Playscreen(audioId: audioId)));
   }
 
   Future<void> _chooseAndPlayFile(
@@ -38,7 +34,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     store.dispatch(CreateAudioAction(chosenFilePath));
 
-    store.dispatch(SetCurrentAudioAction(chosenFilePath));
+    // store.dispatch(SetCurrentAudioAction(store.state.currentAudio));
   }
 
   @override
@@ -58,7 +54,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       return store;
                     },
                     builder: (context, store) {
-                      // return Container(width: 0, height: 0);
                       return PopupMenuButton(
                         icon: Icon(Icons.more_vert, size: 34.0),
                         itemBuilder: (context) => [
@@ -96,7 +91,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
                           return ListTile(
                             onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath, audioId),
+                                context, audioId),
                             title: Text(
                               getFileNameFromFilePath(audioFilePath),
                             ),
@@ -110,7 +105,5 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ),
       ),
     );
-    // },
-    // );
   }
 }

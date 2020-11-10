@@ -19,6 +19,7 @@ List<Audio> _addAudios(List<Audio> audios, AddAudiosAction action) {
   return List.from(audios)..addAll(action.audios);
 }
 
+// TODO: do i even need to have a reducer for this?
 List<Audio> _createAudio(List<Audio> audios, CreateAudioAction action) {
   // just used to trigger createAudio middleware
   return audios;
@@ -30,3 +31,5 @@ final currentAudioReducer =
 Audio _setCurrentAudio(Audio audio, SetCurrentAudioAction action) {
   return action.newCurrentAudio;
 }
+
+// final playCurrentAudio

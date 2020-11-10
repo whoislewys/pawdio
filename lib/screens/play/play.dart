@@ -5,18 +5,19 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/app_state.dart';
 import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 import 'package:pawdio/utils/util.dart';
+import 'package:redux/redux.dart';
 
 class Playscreen extends StatefulWidget {
-  final String currentFilePath;
   final int audioId;
   // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
-  Playscreen({Key key, @required this.currentFilePath, @required this.audioId})
-      : super(key: key);
+  Playscreen({Key key, @required this.audioId}) : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -25,13 +26,12 @@ class Playscreen extends StatefulWidget {
 class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
   // TODO: add modal for taking notes
-  bool _addNoteModalOpen = false;
+  // bool _addNoteModalOpen = false;
   bool _isPlaying = false;
   double _duration;
   double _playPosition;
   PawdioDb _database;
   String title = '';
-  String currentFilePath;
   int audioId;
   List<Bookmark> _bookmarks;
   List<int> _bookmarkTimes;
@@ -52,20 +52,18 @@ class _PlayscreenState extends State<Playscreen> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    currentFilePath = widget.currentFilePath;
     audioId = widget.audioId;
 
     SchedulerBinding.instance.addPostFrameCallback((_) async {
-      // _database = await PawdioDb.create();
       await _initBookmarkTimes();
     });
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
-    WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-        inactiveCallback: () => _database.updateLastPosition(
-            currentFilePath, _playPosition.toInt())));
-    _playFile(currentFilePath);
+    // WidgetsBinding.instance.addObserver(LifecycleEventHandler(
+    //     inactiveCallback: () => _database.updateLastPosition(
+    //         currentFilePath, _playPosition.toInt())));
+    // _playFile(currentFilePath);
   }
 
   Future<void> _initBookmarkTimes() async {
@@ -85,12 +83,6 @@ class _PlayscreenState extends State<Playscreen> {
   void _cleanup() async {
     await _audioPlayer.stop();
   }
-
-  // Future<void> _chooseAndPlayFile() async {
-  // Open file manager and choose file
-  // currentFilePath = await FilePicker.getFilePath();
-  // _playFile(currentFilePath);
-  // }
 
   /// Setup subscriptions audioPlayer's PlayPosition
   Future<void> _playFile(String filePath) async {
@@ -154,7 +146,7 @@ class _PlayscreenState extends State<Playscreen> {
       await _database
           .createBookmark(Bookmark(timestamp: position, audioId: audioId));
       // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
-      setState(() => _addNoteModalOpen = true);
+      // setState(() => _addNoteModalOpen = true);
     } catch (e) {}
     _updateBookmarksState();
   }
@@ -262,21 +254,39 @@ class _PlayscreenState extends State<Playscreen> {
                       size: 40.0,
                     ),
                   ),
-                  IconButton(
-                    padding: new EdgeInsets.all(0.0),
-                    onPressed: () {
-                      if (_isPlaying) {
-                        _stop();
-                      } else {
-                        _resume();
-                      }
+                  // TODO: finish reduxifying the play screen
+                  StoreConnector<AppState, Store>(
+                    converter: (Store<AppState> store) {
+                      return store;
                     },
-                    icon: Icon(
-                      _isPlaying
-                          ? Icons.pause_circle_filled
-                          : Icons.play_circle_filled,
-                      size: 48.0,
-                    ),
+                    onInit: (Store<AppState> store) => () {
+                      // Set up listener for app lifecycle events
+                      // to save lastPosition of current audio when app goes inactive or closes.
+                      WidgetsBinding.instance.addObserver(LifecycleEventHandler(
+                          inactiveCallback: () => _database.updateLastPosition(
+                              store.state.currentAudio.filePath,
+                              _playPosition.toInt())));
+                      _playFile(store.state.currentAudio.filePath);
+                    },
+                    builder: (context, store) {
+                      return IconButton(
+                        padding: new EdgeInsets.all(0.0),
+                        onPressed: () {
+                          // TODO: use store._isPlaying
+                          if (_isPlaying) {
+                            _stop();
+                          } else {
+                            _resume();
+                          }
+                        },
+                        icon: Icon(
+                          _isPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled,
+                          size: 48.0,
+                        ),
+                      );
+                    },
                   ),
                   IconButton(
                     padding: new EdgeInsets.all(0.0),

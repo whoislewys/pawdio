@@ -21,3 +21,8 @@ class SetCurrentAudioAction {
   final Audio newCurrentAudio;
   SetCurrentAudioAction(this.newCurrentAudio);
 }
+
+class PlayAudioFromFilePathAction {
+  final String filePath;
+  PlayAudioFromFilePathAction(this.filePath);
+}

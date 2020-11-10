@@ -8,7 +8,7 @@ import 'package:pawdio/redux/library/middlewares.dart';
 AppState appReducer(AppState state, action) {
   return AppState(
     audios: audiosReducer(state.audios, action),
-    currentAudioPath: currentAudioReducer(state.currentAudioPath, action),
+    currentAudio: currentAudioReducer(state.currentAudio, action),
   );
 }
 
@@ -19,5 +19,6 @@ final store = Store<AppState>(
   middleware: [
     hydrateAudiosMiddleware,
     createAudioMiddleware,
+    playSelectedAudio,
   ],
 );

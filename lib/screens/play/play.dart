@@ -54,9 +54,9 @@ class _PlayscreenState extends State<Playscreen> {
     _duration = 0.0;
     audioId = widget.audioId;
 
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      await _initBookmarkTimes();
-    });
+    // SchedulerBinding.instance.addPostFrameCallback((_) async {
+    //   await _hydrateBookmarks(audioId);
+    // });
 
     // Set up listener for app lifecycle events
     // to save lastPosition of current audio when app goes inactive or closes.
@@ -66,7 +66,7 @@ class _PlayscreenState extends State<Playscreen> {
     // _playFile(currentFilePath);
   }
 
-  Future<void> _initBookmarkTimes() async {
+  Future<void> _hydrateBookmarks(audioId) async {
     _bookmarks = await _database.getBookmarksForAudio(audioId);
     print('bookmarks: $_bookmarks');
     _bookmarkTimes =
@@ -133,7 +133,7 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _isPlaying = false);
   }
 
-  _updateBookmarksState() async {
+  _updateBookmarksState(audioId) async {
     final newBookmarks = await _database.getBookmarksForAudio(audioId);
     final newBookmarkTimes =
         List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
@@ -141,26 +141,26 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
-  Future<void> _createBookmark(position) async {
+  Future<void> _createBookmark(position, audioId) async {
     try {
       await _database
           .createBookmark(Bookmark(timestamp: position, audioId: audioId));
       // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
       // setState(() => _addNoteModalOpen = true);
     } catch (e) {}
-    _updateBookmarksState();
+    _updateBookmarksState(audioId);
   }
 
-  void _createOrDeleteBookmark() {
+  void _createOrDeleteBookmark(audioId) {
     // print('creating or deleting Bookmark');
     int curPosition = _playPosition.toInt();
     // print('position curPosition');
     if (_bookmarkTimes.contains(curPosition)) {
       _database.deleteBookmark(curPosition);
     } else {
-      _createBookmark(curPosition);
+      _createBookmark(curPosition, audioId);
     }
-    _updateBookmarksState();
+    _updateBookmarksState(audioId);
   }
 
   @override
@@ -259,7 +259,13 @@ class _PlayscreenState extends State<Playscreen> {
                     converter: (Store<AppState> store) {
                       return store;
                     },
-                    onInit: (Store<AppState> store) => () {
+                    onInit: (Store<AppState> store) {
+                      // _database = await PawdioDb.create();
+                      // SchedulerBinding.instance.addPostFrameCallback((_) async {
+                      print('hydrating bookmarks for current audio: ${store.state.currentAudio}');
+                      _hydrateBookmarks(store.state.currentAudio.id);
+                      // });
+
                       // Set up listener for app lifecycle events
                       // to save lastPosition of current audio when app goes inactive or closes.
                       WidgetsBinding.instance.addObserver(LifecycleEventHandler(
@@ -394,7 +400,7 @@ class _PlayscreenState extends State<Playscreen> {
                     // BOOKMARK
                     IconButton(
                       padding: new EdgeInsets.all(0.0),
-                      onPressed: () => _createOrDeleteBookmark(),
+                      onPressed: () => _createOrDeleteBookmark(audioId),
                       // if play position is on top of a bookmark position, show the filled bookmark icon
                       // else, show the outlined one
                       icon: currentlyOnBookmark

@@ -47,13 +47,13 @@ Future<void> createAudioMiddleware(
   next(action);
 }
 
-/// just sets current audio for now, navigation and playing still happening in play screen
-Future<void> playSelectedAudio(
-    Store<AppState> store, action, NextDispatcher next) async {
-  if (action is PlayAudioFromFilePathAction) {
-    final database = await PawdioDb.create();
-    Audio audioResult = await database.getAudioByFilePath(action.filePath);
-    store.dispatch(SetCurrentAudioAction(audioResult));
-  }
-  next(action);
-}
+// /// just sets current audio for now, navigation and playing still happening in play screen
+// Future<void> playSelectedAudio(
+//     Store<AppState> store, action, NextDispatcher next) async {
+//   if (action is PlayAudioFromFilePathAction) {
+//     final database = await PawdioDb.create();
+//     Audio audioResult = await database.getAudioByFilePath(action.filePath);
+//     store.dispatch(SetCurrentAudioAction(audioResult));
+//   }
+//   next(action);
+// }

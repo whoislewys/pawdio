@@ -18,9 +18,9 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _navigateToPlayscreenAndPlayFile(
-      BuildContext ctx, int audioId) async {
+      BuildContext ctx, Audio audioToPlay) async {
     Navigator.push(ctx,
-        MaterialPageRoute(builder: (context) => Playscreen(audioId: audioId)));
+        MaterialPageRoute(builder: (context) => Playscreen(audioId: audioToPlay.id)));
   }
 
   Future<void> _chooseAndPlayFile(
@@ -74,24 +74,28 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 'Library',
                 style: Theme.of(context).textTheme.headline6,
               ),
-              StoreConnector<AppState, List<Audio>>(
+              StoreConnector<AppState, Store<AppState>>(
                   converter: (Store<AppState> store) {
-                    return store.state.audios;
+                    return store;
                   },
                   onInit: (Store<AppState> store) =>
                       store.dispatch(HydrateAudiosAction()),
-                  builder: (context, audios) {
+                  builder: (context, store) {
                     return Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: audios.length,
+                        itemCount: store.state.audios.length,
                         itemBuilder: (BuildContext context, int index) {
-                          String audioFilePath = audios[index].filePath;
-                          int audioId = audios[index].id;
+                          String audioFilePath = store.state.audios[index].filePath;
+                          // int audioId = audios[index].id;
 
                           return ListTile(
-                            onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioId),
+                            onTap: () {
+                              Audio audioToPlay = store.state.audios[index];
+                              store.dispatch(SetCurrentAudioAction(audioToPlay));
+                              _navigateToPlayscreenAndPlayFile(
+                                  context, audioToPlay);
+                            },
                             title: Text(
                               getFileNameFromFilePath(audioFilePath),
                             ),

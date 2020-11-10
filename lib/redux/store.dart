@@ -19,6 +19,6 @@ final store = Store<AppState>(
   middleware: [
     hydrateAudiosMiddleware,
     createAudioMiddleware,
-    playSelectedAudio,
+    // playSelectedAudio,
   ],
 );

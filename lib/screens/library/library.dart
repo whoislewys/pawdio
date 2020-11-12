@@ -19,8 +19,7 @@ class LibraryScreen extends StatefulWidget {
 class _LibraryScreenState extends State<LibraryScreen> {
   Future<void> _navigateToPlayscreenAndPlayFile(
       BuildContext ctx, Audio audioToPlay) async {
-    Navigator.push(ctx,
-        MaterialPageRoute(builder: (context) => Playscreen(audioId: audioToPlay.id)));
+    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen()));
   }
 
   Future<void> _chooseAndPlayFile(
@@ -86,13 +85,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         shrinkWrap: true,
                         itemCount: store.state.audios.length,
                         itemBuilder: (BuildContext context, int index) {
-                          String audioFilePath = store.state.audios[index].filePath;
+                          String audioFilePath =
+                              store.state.audios[index].filePath;
                           // int audioId = audios[index].id;
 
                           return ListTile(
                             onTap: () {
                               Audio audioToPlay = store.state.audios[index];
-                              store.dispatch(SetCurrentAudioAction(audioToPlay));
+                              store
+                                  .dispatch(SetCurrentAudioAction(audioToPlay));
                               _navigateToPlayscreenAndPlayFile(
                                   context, audioToPlay);
                             },

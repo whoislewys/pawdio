@@ -5,17 +5,18 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/app_state.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/utils/life_cycle_event_handler.dart';
 import 'package:pawdio/utils/util.dart';
+import 'package:redux/redux.dart';
 
 class Playscreen extends StatefulWidget {
-  final String currentFilePath;
-  final int audioId;
   // todo: replace this passing from screen to screen with redux so i can have a nice little queue in the future
-  Playscreen({Key key, @required this.currentFilePath, @required this.audioId})
-      : super(key: key);
+  Playscreen({Key key}) : super(key: key);
 
   @override
   _PlayscreenState createState() => _PlayscreenState();
@@ -24,14 +25,13 @@ class Playscreen extends StatefulWidget {
 class _PlayscreenState extends State<Playscreen> {
   AudioPlayer _audioPlayer;
   // TODO: add modal for taking notes
-  bool _addNoteModalOpen = false;
+  // bool _addNoteModalOpen = false;
   bool _isPlaying = false;
   double _duration;
   double _playPosition;
+
   PawdioDb _database;
   String title = '';
-  String currentFilePath;
-  int audioId;
   List<Bookmark> _bookmarks;
   List<int> _bookmarkTimes;
 
@@ -51,23 +51,9 @@ class _PlayscreenState extends State<Playscreen> {
     _audioPlayer = AudioPlayer(playerId: 'MyPlayer');
     _playPosition = 0.0;
     _duration = 0.0;
-    currentFilePath = widget.currentFilePath;
-    audioId = widget.audioId;
-
-    SchedulerBinding.instance.addPostFrameCallback((_) async {
-      _database = await PawdioDb.create();
-      await _initBookmarkTimes();
-    });
-
-    // Set up listener for app lifecycle events
-    // to save lastPosition of current audio when app goes inactive or closes.
-    WidgetsBinding.instance.addObserver(LifecycleEventHandler(
-        inactiveCallback: () => _database.updateLastPosition(
-            currentFilePath, _playPosition.toInt())));
-    _playFile(currentFilePath);
   }
 
-  Future<void> _initBookmarkTimes() async {
+  Future<void> _hydrateBookmarks(audioId) async {
     _bookmarks = await _database.getBookmarksForAudio(audioId);
     print('bookmarks: $_bookmarks');
     _bookmarkTimes =
@@ -83,12 +69,6 @@ class _PlayscreenState extends State<Playscreen> {
 
   void _cleanup() async {
     await _audioPlayer.stop();
-  }
-
-  Future<void> _chooseAndPlayFile() async {
-    // Open file manager and choose file
-    currentFilePath = await FilePicker.getFilePath();
-    _playFile(currentFilePath);
   }
 
   /// Setup subscriptions audioPlayer's PlayPosition
@@ -116,10 +96,9 @@ class _PlayscreenState extends State<Playscreen> {
     });
 
     // if file has been chosen before, query for and play from the last position
-    List<Map<String, dynamic>> audioResult =
-        await _database.queryAudioForFilePath(filePath);
-    if (audioResult.isNotEmpty) {
-      int previousPosition = audioResult.first['last_position'];
+    Audio audio = await _database.getAudioByFilePath(filePath);
+    if (audio != null) {
+      int previousPosition = audio.lastPosition;
       _audioPlayer.seek(Duration(milliseconds: previousPosition));
     }
 
@@ -141,7 +120,7 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _isPlaying = false);
   }
 
-  _updateBookmarksState() async {
+  _updateBookmarksState(audioId) async {
     final newBookmarks = await _database.getBookmarksForAudio(audioId);
     final newBookmarkTimes =
         List<int>.from(newBookmarks.map((bookmark) => bookmark.timestamp));
@@ -149,26 +128,26 @@ class _PlayscreenState extends State<Playscreen> {
     setState(() => _bookmarkTimes = newBookmarkTimes);
   }
 
-  Future<void> _createBookmark(position) async {
+  Future<void> _createBookmark(position, audioId) async {
     try {
       await _database
           .createBookmark(Bookmark(timestamp: position, audioId: audioId));
       // TODO: open a dialog that says Bookmark added! Add a note? Required TextField. Two action buttons: 'Not now | Save note'
-      setState(() => _addNoteModalOpen = true);
+      // setState(() => _addNoteModalOpen = true);
     } catch (e) {}
-    _updateBookmarksState();
+    _updateBookmarksState(audioId);
   }
 
-  void _createOrDeleteBookmark() {
+  void _createOrDeleteBookmark(audioId) {
     // print('creating or deleting Bookmark');
     int curPosition = _playPosition.toInt();
     // print('position curPosition');
     if (_bookmarkTimes.contains(curPosition)) {
       _database.deleteBookmark(curPosition);
     } else {
-      _createBookmark(curPosition);
+      _createBookmark(curPosition, audioId);
     }
-    _updateBookmarksState();
+    _updateBookmarksState(audioId);
   }
 
   @override
@@ -202,7 +181,8 @@ class _PlayscreenState extends State<Playscreen> {
                         value: 1,
                         child: ListTile(
                           title: Text('Choose File'),
-                          onTap: _chooseAndPlayFile,
+                          onTap: () => print(
+                              'Choose and PLAY FILE BROKEN!!! Replacing with redux middleware'),
                         ),
                       ),
                     ],
@@ -261,21 +241,43 @@ class _PlayscreenState extends State<Playscreen> {
                       size: 40.0,
                     ),
                   ),
-                  IconButton(
-                    padding: new EdgeInsets.all(0.0),
-                    onPressed: () {
-                      if (_isPlaying) {
-                        _stop();
-                      } else {
-                        _resume();
-                      }
+                  // TODO: finish reduxifying the play screen
+                  StoreConnector<AppState, Store>(
+                    converter: (Store<AppState> store) {
+                      return store;
                     },
-                    icon: Icon(
-                      _isPlaying
-                          ? Icons.pause_circle_filled
-                          : Icons.play_circle_filled,
-                      size: 48.0,
-                    ),
+                    onInit: (Store<AppState> store) async {
+                      _database = await PawdioDb.create();
+                      _hydrateBookmarks(store.state.currentAudio.id);
+
+                      // Set up listener for app lifecycle events
+                      // to save lastPosition of current audio when app goes inactive or closes.
+                      WidgetsBinding.instance.addObserver(LifecycleEventHandler(
+                          inactiveCallback: () => _database.updateLastPosition(
+                              store.state.currentAudio.filePath,
+                              _playPosition.toInt())));
+                      _playFile(store.state.currentAudio.filePath);
+                    },
+                    // TODO: onDispose to save lastposition, in addition to the lifecycle handler
+                    builder: (context, store) {
+                      return IconButton(
+                        padding: new EdgeInsets.all(0.0),
+                        onPressed: () {
+                          // TODO: use store._isPlaying
+                          if (_isPlaying) {
+                            _stop();
+                          } else {
+                            _resume();
+                          }
+                        },
+                        icon: Icon(
+                          _isPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled,
+                          size: 48.0,
+                        ),
+                      );
+                    },
                   ),
                   IconButton(
                     padding: new EdgeInsets.all(0.0),
@@ -381,22 +383,28 @@ class _PlayscreenState extends State<Playscreen> {
                     ),
 
                     // BOOKMARK
-                    IconButton(
-                      padding: new EdgeInsets.all(0.0),
-                      onPressed: () => _createOrDeleteBookmark(),
-                      // if play position is on top of a bookmark position, show the filled bookmark icon
-                      // else, show the outlined one
-                      icon: currentlyOnBookmark
-                          ? Icon(
-                              Icons.bookmark,
-                              size: 44.0,
-                            )
-                          : Icon(
-                              Icons.bookmark_border,
-                              size: 44.0,
-                            ),
-                    ),
-
+                    StoreConnector<AppState, Store>(
+                        converter: (Store<AppState> store) {
+                      return store;
+                    }, builder: (context, store) {
+                      return IconButton(
+                        padding: new EdgeInsets.all(0.0),
+                        // TODO: store connect this ho
+                        onPressed: () => _createOrDeleteBookmark(
+                            store.state.currentAudio.id),
+                        // if play position is on top of a bookmark position, show the filled bookmark icon
+                        // else, show the outlined one
+                        icon: currentlyOnBookmark
+                            ? Icon(
+                                Icons.bookmark,
+                                size: 44.0,
+                              )
+                            : Icon(
+                                Icons.bookmark_border,
+                                size: 44.0,
+                              ),
+                      );
+                    }),
                     // PREVIOUS BOOKMARK LEFT CHEVRON
                     IconButton(
                       padding: new EdgeInsets.all(0.0),

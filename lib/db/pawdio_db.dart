@@ -1,4 +1,5 @@
 import 'package:path/path.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/models/bookmark.dart';
 import 'package:pawdio/models/note.dart';
 import 'package:sqflite/sqflite.dart';
@@ -6,90 +7,99 @@ import 'package:sqflite/sqflite.dart';
 class PawdioDb {
   static final _databaseName = 'PawdioDatabase.db';
   static final _databaseVersion = 1;
+  static PawdioDb _instance;
   Database _database;
 
   // Singleton pattern using private constructor so only one PawdioDb exists throughout whole app
   PawdioDb._privateConstructor() {
-    print(' private constructor ');
+    print('private constructor');
   }
+
   static Future<PawdioDb> create() async {
-    PawdioDb pawdioDb = PawdioDb._privateConstructor();
-    await pawdioDb.setupDb();
-    // await pawdioDb.deleteDB();
-    return pawdioDb;
+    print('calling getInstance');
+    if (_instance != null) {
+      // ensure that setup only gets called once
+      print('instance already exists, retruning');
+      return _instance;
+    } else {
+      print('***creating DB singleton***');
+      _instance = PawdioDb._privateConstructor();
+      await _instance.setupDb();
+      // await _instance.deleteDB();
+      return _instance;
+    }
   }
 
   Future<void> setupDb() async {
-    if (_database != null) {
-      // ensure that setup only gets called once
-      return;
-    }
-
     print('\n****Setting up DB****\n');
-    var databasesPath =
-        await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
-    print('databasesPath: $databasesPath');
+    var databasesPath = '';
+    try {
+      databasesPath =
+          await getDatabasesPath(); // /data/user/0/com.example.pawdio/databases
+      print('got databases path: $databasesPath');
+    } catch (e) {
+      print('Error getting db path: $e');
+    }
     String path = join(databasesPath, _databaseName);
+
+    // Create callback to configure db for foreign key usage
+    final addForeignKeySupport = (Database db) async {
+      print('addin fkey support');
+      try {
+        await db.execute('PRAGMA foreign_keys = ON');
+      } catch (e) {
+        print('error $e');
+      }
+    };
 
     try {
       print('opening db');
-      // TODO: check if i actually need this to enable foreign key support. seems fucked
-      final addForeignKeySupport = (Database db) async {
-        print('addin fkey support');
-        try {
-          await db.execute('PRAGMA foreign_keys = ON');
-        } catch (e) {
-          print('error $e');
-        }
-      };
       _database = await openDatabase(path,
-          version: _databaseVersion, onConfigure: addForeignKeySupport,
+          version: _databaseVersion,
+          onConfigure: addForeignKeySupport,
+          onOpen: (Database db) async => print('opened DB'),
           onCreate: (Database db, int version) async {
-        print('creating db');
-        try {
-          print('create table audio');
-          try {
-            // id INTEGER PRIMARY KEY AUTOINCREMENT,
-            await db.execute('''
+            print('creating db');
+            print('create table audio');
+            try {
+              // id INTEGER PRIMARY KEY AUTOINCREMENT,
+              await db.execute('''
                   CREATE TABLE IF NOT EXISTS Audios(
                       id INTEGER PRIMARY KEY AUTOINCREMENT,
                       file_path TEXT UNIQUE,
                       last_position INTEGER
                   );
                   ''');
-          } catch (e) {
-            print('Error creating Audio table: $e');
-          }
+            } catch (e) {
+              print('Error creating Audio table: $e');
+            }
 
-          try {
-            print('create table bookmarks');
-            await db.execute('''
-                    CREATE TABLE IF NOT EXISTS Bookmarks(
-                        timestamp INTEGER,
-                        audio_id INTEGER,
-                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
-                    );
-                    ''');
-          } catch (e) {
-            print('Error creating Bookmarks table: $e');
-          }
+            try {
+              print('create table bookmarks');
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS Bookmarks(
+                      timestamp INTEGER,
+                      audio_id INTEGER,
+                      FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                  );
+                  ''');
+            } catch (e) {
+              print('Error creating Bookmarks table: $e');
+            }
 
-          print('create table notes');
-          try {
-            await db.execute('''
-                    CREATE TABLE IF NOT EXISTS Notes(
-                        note TEXT,
-                        audio_id INTEGER,
-                        FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
-                    );
-                    ''');
-          } catch (e) {
-            print('Error creating Notes table: $e');
-          }
-        } catch (e) {
-          print('error creating db: $e');
-        }
-      });
+            print('create table notes');
+            try {
+              await db.execute('''
+                  CREATE TABLE IF NOT EXISTS Notes(
+                      note TEXT,
+                      audio_id INTEGER,
+                      FOREIGN KEY(audio_id) REFERENCES Audios(id) ON DELETE NO ACTION ON UPDATE NO ACTION
+                  );
+                  ''');
+            } catch (e) {
+              print('Error creating Notes table: $e');
+            }
+          });
     } catch (e) {
       print('error opening db: $e');
     }
@@ -103,43 +113,58 @@ class PawdioDb {
     deleteDatabase(path);
   }
 
-//  $$$$$$\  $$\   $$\ $$$$$$$$\ $$$$$$$\  $$$$$$\ $$$$$$$$\  $$$$$$\
-// $$  __$$\ $$ |  $$ |$$  _____|$$  __$$\ \_$$  _|$$  _____|$$  __$$\
-// $$ /  $$ |$$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |      $$ /  \__|
-// $$ |  $$ |$$ |  $$ |$$$$$\    $$$$$$$  |  $$ |  $$$$$\    \$$$$$$\
-// $$ |  $$ |$$ |  $$ |$$  __|   $$  __$$<   $$ |  $$  __|    \____$$\
-// $$ $$\$$ |$$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |      $$\   $$ |
-// \$$$$$$ / \$$$$$$  |$$$$$$$$\ $$ |  $$ |$$$$$$\ $$$$$$$$\ \$$$$$$  |
-//  \___$$$\  \______/ \________|\__|  \__|\______|\________| \______/
-//      \___|
+  //  $$$$$$\  $$\   $$\ $$$$$$$$\ $$$$$$$\  $$$$$$\ $$$$$$$$\  $$$$$$\
+  // $$  __$$\ $$ |  $$ |$$  _____|$$  __$$\ \_$$  _|$$  _____|$$  __$$\
+  // $$ /  $$ |$$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |      $$ /  \__|
+  // $$ |  $$ |$$ |  $$ |$$$$$\    $$$$$$$  |  $$ |  $$$$$\    \$$$$$$\
+  // $$ |  $$ |$$ |  $$ |$$  __|   $$  __$$<   $$ |  $$  __|    \____$$\
+  // $$ $$\$$ |$$ |  $$ |$$ |      $$ |  $$ |  $$ |  $$ |      $$\   $$ |
+  // \$$$$$$ / \$$$$$$  |$$$$$$$$\ $$ |  $$ |$$$$$$\ $$$$$$$$\ \$$$$$$  |
+  //  \___$$$\  \______/ \________|\__|  \__|\______|\________| \______/
+  //      \___|
 
-//  █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ███████╗
-// ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██╔════╝
-// ███████║██║   ██║██║  ██║██║██║   ██║███████╗
-// ██╔══██║██║   ██║██║  ██║██║██║   ██║╚════██║
-// ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████║
-// ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝
+  //  █████╗ ██╗   ██╗██████╗ ██╗ ██████╗ ███████╗
+  // ██╔══██╗██║   ██║██╔══██╗██║██╔═══██╗██╔════╝
+  // ███████║██║   ██║██║  ██║██║██║   ██║███████╗
+  // ██╔══██║██║   ██║██║  ██║██║██║   ██║╚════██║
+  // ██║  ██║╚██████╔╝██████╔╝██║╚██████╔╝███████║
+  // ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝ ╚═════╝ ╚══════╝
 
-  Future<List<Map<String, dynamic>>> queryAudioForFilePath(
-      String filePath) async {
+  Future<Audio> getAudioByFilePath(String filePath) async {
     try {
       List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
         return ctx
             .rawQuery('SELECT * FROM Audios WHERE file_path=(?)', [filePath]);
       });
-      return res;
+
+      List<Audio> audios =
+          List<Audio>.from(res.map((row) => Audio.fromRow(row)));
+      if (audios.length == 1) {
+        return audios.first;
+      } else if (audios.length > 1) {
+        print('Warning: more than 1 audio found for file path $filePath');
+        return audios.first;
+      } else if (audios.length == 0) {
+        return null;
+      } else {
+        print(
+            'Error: Negative amount of audios found for filepath $filePath. WTF did you do?');
+        return null;
+      }
     } catch (e) {
       print('this bitch ass query empty yeet. error: $e');
-      return [];
+      return null;
     }
   }
 
-  Future<List<Map<String, dynamic>>> getAllAudios() async {
+  Future<List<Audio>> getAllAudios() async {
     try {
-      List<Map<String, dynamic>> res = await _database.transaction((ctx) async {
+      var res = await _database.transaction((ctx) async {
         return ctx.rawQuery('SELECT * FROM Audios');
       });
-      return res;
+      List<Audio> audios =
+          List<Audio>.from(res.map((row) => Audio.fromRow(row)));
+      return audios;
     } catch (e) {
       print('Error getting all audios. error: $e');
       return [];
@@ -148,13 +173,10 @@ class PawdioDb {
 
   Future<void> createAudio(filePath) async {
     print('Inserting!');
-    Map<String, dynamic> row = {
-      'file_path': filePath,
-      'last_position': 0,
-    };
+    final audio = Audio(filePath: filePath, lastPosition: 0);
 
     await _database.transaction((ctx) async {
-      await ctx.insert('Audios', row);
+      await ctx.insert('Audios', audio.toMap());
     });
   }
 
@@ -170,12 +192,12 @@ class PawdioDb {
     }
   }
 
-// ██████╗  ██████╗  ██████╗ ██╗  ██╗███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗
-// ██╔══██╗██╔═══██╗██╔═══██╗██║ ██╔╝████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝
-// ██████╔╝██║   ██║██║   ██║█████╔╝ ██╔████╔██║███████║██████╔╝█████╔╝ ███████╗
-// ██╔══██╗██║   ██║██║   ██║██╔═██╗ ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ╚════██║
-// ██████╔╝╚██████╔╝╚██████╔╝██║  ██╗██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████║
-// ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
+  // ██████╗  ██████╗  ██████╗ ██╗  ██╗███╗   ███╗ █████╗ ██████╗ ██╗  ██╗███████╗
+  // ██╔══██╗██╔═══██╗██╔═══██╗██║ ██╔╝████╗ ████║██╔══██╗██╔══██╗██║ ██╔╝██╔════╝
+  // ██████╔╝██║   ██║██║   ██║█████╔╝ ██╔████╔██║███████║██████╔╝█████╔╝ ███████╗
+  // ██╔══██╗██║   ██║██║   ██║██╔═██╗ ██║╚██╔╝██║██╔══██║██╔══██╗██╔═██╗ ╚════██║
+  // ██████╔╝╚██████╔╝╚██████╔╝██║  ██╗██║ ╚═╝ ██║██║  ██║██║  ██║██║  ██╗███████║
+  // ╚═════╝  ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝
 
   Future<void> createBookmark(Bookmark bookmark) async {
     try {
@@ -225,12 +247,12 @@ class PawdioDb {
     }
   }
 
-// ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
-// ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
-// ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗
-// ██║╚██╗██║██║   ██║   ██║   ██╔══╝  ╚════██║
-// ██║ ╚████║╚██████╔╝   ██║   ███████╗███████║
-// ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝
+  // ███╗   ██╗ ██████╗ ████████╗███████╗███████╗
+  // ████╗  ██║██╔═══██╗╚══██╔══╝██╔════╝██╔════╝
+  // ██╔██╗ ██║██║   ██║   ██║   █████╗  ███████╗
+  // ██║╚██╗██║██║   ██║   ██║   ██╔══╝  ╚════██║
+  // ██║ ╚████║╚██████╔╝   ██║   ███████╗███████║
+  // ╚═╝  ╚═══╝ ╚═════╝    ╚═╝   ╚══════╝╚══════╝
 
   Future<void> createNote(Note note) async {
     try {

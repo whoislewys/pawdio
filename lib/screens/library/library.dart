@@ -1,9 +1,13 @@
+import 'package:flutter_redux/flutter_redux.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
-import 'package:pawdio/db/pawdio_db.dart';
+import 'package:pawdio/models/app_state.dart';
+import 'package:pawdio/models/audio.dart';
 import 'package:pawdio/screens/play/play.dart';
 import 'package:pawdio/utils/util.dart';
+import 'package:pawdio/redux/library/actions.dart';
+import 'package:redux/redux.dart';
 
 class LibraryScreen extends StatefulWidget {
   LibraryScreen({Key key}) : super(key: key);
@@ -13,46 +17,23 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  List<Map<String, dynamic>> _audios;
-  PawdioDb _database;
-
-  @override
-  void initState() {
-    super.initState();
-    _hydrateAudio();
-  }
-
-  Future<void> _hydrateAudio() async {
-    _database = await PawdioDb.create();
-    _audios = await _database.getAllAudios();
-    return;
-  }
-
   Future<void> _navigateToPlayscreenAndPlayFile(
-      BuildContext ctx, String filePath, int audioId) async {
-    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen(currentFilePath: filePath, audioId: audioId)));
+      BuildContext ctx, Audio audioToPlay) async {
+    Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen()));
   }
 
-  Future<void> _chooseAndPlayFile(BuildContext ctx) async {
+  Future<void> _chooseAndPlayFile(
+      BuildContext ctx, Store<AppState> store) async {
     // Open file manager and choose file
     var chosenFilePath = await FilePicker.getFilePath();
     if (chosenFilePath == null) {
       print('ERROR: Null file was chosen');
       return;
     }
-    
-    List<Map<String, dynamic>> audioResult =
-        await _database.queryAudioForFilePath(chosenFilePath);
 
-    if (audioResult.isEmpty) {
-      // if file has not been chosen before, create record for it in DB
-      await _database.createAudio(chosenFilePath);
-      final newAudios = await _database.getAllAudios();
-      setState(() { _audios = newAudios; });
-      audioResult = await _database.queryAudioForFilePath(chosenFilePath);
-    }
-    
-    _navigateToPlayscreenAndPlayFile(ctx, chosenFilePath, audioResult[0]['rowid']);
+    store.dispatch(CreateAudioAction(chosenFilePath));
+
+    // store.dispatch(SetCurrentAudioAction(store.state.currentAudio));
   }
 
   @override
@@ -66,40 +47,56 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 alignment: Alignment.topRight,
                 child: Padding(
                   padding: EdgeInsets.only(right: 16.0),
-                  child: PopupMenuButton(
-                    icon: Icon(Icons.more_vert, size: 34.0),
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: 1,
-                        child: ListTile(
-                          title: Text('Choose File'),
-                          onTap: () => _chooseAndPlayFile(context),
-                        ),
-                      ),
-                    ],
+                  // todo: replace 2nd type arg with actual viewmodel probably
+                  child: StoreConnector<AppState, Store>(
+                    converter: (Store<AppState> store) {
+                      return store;
+                    },
+                    builder: (context, store) {
+                      return PopupMenuButton(
+                        icon: Icon(Icons.more_vert, size: 34.0),
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 1,
+                            child: ListTile(
+                              title: Text('Add audio'),
+                              onTap: () => _chooseAndPlayFile(context, store),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
               Text(
                 'Library',
-                style: Theme.of(context).textTheme.title,
+                style: Theme.of(context).textTheme.headline6,
               ),
-              FutureBuilder(
-                future: _hydrateAudio(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.done) {
+              StoreConnector<AppState, Store<AppState>>(
+                  converter: (Store<AppState> store) {
+                    return store;
+                  },
+                  onInit: (Store<AppState> store) =>
+                      store.dispatch(HydrateAudiosAction()),
+                  builder: (context, store) {
                     return Expanded(
                       child: ListView.builder(
                         shrinkWrap: true,
-                        itemCount: _audios.length,
+                        itemCount: store.state.audios.length,
                         itemBuilder: (BuildContext context, int index) {
-                          String audioFilePath = _audios[index]['file_path'];
-                          int audioId = _audios[index]['id'];
-                          print('audio id: $audioId');
+                          String audioFilePath =
+                              store.state.audios[index].filePath;
+                          // int audioId = audios[index].id;
 
                           return ListTile(
-                            onTap: () => _navigateToPlayscreenAndPlayFile(
-                                context, audioFilePath, audioId),
+                            onTap: () {
+                              Audio audioToPlay = store.state.audios[index];
+                              store
+                                  .dispatch(SetCurrentAudioAction(audioToPlay));
+                              _navigateToPlayscreenAndPlayFile(
+                                  context, audioToPlay);
+                            },
                             title: Text(
                               getFileNameFromFilePath(audioFilePath),
                             ),
@@ -107,10 +104,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         },
                       ),
                     );
-                  } else {
-                    return CircularProgressIndicator();
-                  }
-              }),
+                  }),
             ],
           ),
         ),

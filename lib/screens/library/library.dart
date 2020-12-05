@@ -17,6 +17,8 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
+  static const double tilePadding = 2.0;
+
   Future<void> _navigateToPlayscreenAndPlayFile(
       BuildContext ctx, Audio audioToPlay) async {
     Navigator.push(ctx, MaterialPageRoute(builder: (context) => Playscreen()));
@@ -32,6 +34,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     store.dispatch(CreateAudioAction(chosenFilePath));
+  }
+
+  void _playTappedAudio(store, index) {
+    Audio audioToPlay = store.state.audios[index];
+    store.dispatch(SetCurrentAudioAction(audioToPlay));
+    _navigateToPlayscreenAndPlayFile(context, audioToPlay);
   }
 
   @override
@@ -89,25 +97,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           print('audio: ${store.state.audios[index]}');
                           return Container(
                             child: ListTile(
-                              onTap: () {
-                                Audio audioToPlay = store.state.audios[index];
-                                store.dispatch(
-                                    SetCurrentAudioAction(audioToPlay));
-                                _navigateToPlayscreenAndPlayFile(
-                                    context, audioToPlay);
-                              },
+                              onTap: () => _playTappedAudio(store, index),
+                              leading: Container(
+                                margin: const EdgeInsets.fromLTRB(
+                                    0, tilePadding, 0, 0),
+                                child:Image.asset('assets/no-art-found.png'),
+                              ),
                               title: Text(
                                 getFileNameFromFilePath(audioFilePath),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children:[
+                                children: [
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(0, 8.0, 0, 8.0),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        0, 0, 0, tilePadding),
                                     child: Text('bruh'),
                                   ),
                                   Padding(
-                                    padding: const EdgeInsets.fromLTRB(0, 8.0, 0, 8.0),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        0, tilePadding, 0, tilePadding),
                                     child: LinearProgressIndicator(),
                                   ),
                                 ],

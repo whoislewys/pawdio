@@ -32,8 +32,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
 
     store.dispatch(CreateAudioAction(chosenFilePath));
-
-    // store.dispatch(SetCurrentAudioAction(store.state.currentAudio));
   }
 
   @override
@@ -87,19 +85,39 @@ class _LibraryScreenState extends State<LibraryScreen> {
                         itemBuilder: (BuildContext context, int index) {
                           String audioFilePath =
                               store.state.audios[index].filePath;
-                          // int audioId = audios[index].id;
 
-                          return ListTile(
-                            onTap: () {
-                              Audio audioToPlay = store.state.audios[index];
-                              store
-                                  .dispatch(SetCurrentAudioAction(audioToPlay));
-                              _navigateToPlayscreenAndPlayFile(
-                                  context, audioToPlay);
-                            },
-                            title: Text(
-                              getFileNameFromFilePath(audioFilePath),
+                          print('audio: ${store.state.audios[index]}');
+                          return Container(
+                            child: ListTile(
+                              onTap: () {
+                                Audio audioToPlay = store.state.audios[index];
+                                store.dispatch(
+                                    SetCurrentAudioAction(audioToPlay));
+                                _navigateToPlayscreenAndPlayFile(
+                                    context, audioToPlay);
+                              },
+                              title: Text(
+                                getFileNameFromFilePath(audioFilePath),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children:[
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(0, 8.0, 0, 8.0),
+                                    child: Text('bruh'),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(0, 8.0, 0, 8.0),
+                                    child: LinearProgressIndicator(),
+                                  ),
+                                ],
+                              ),
                             ),
+                            // if last tile in list, don't add bottom border
+                            decoration: index == store.state.audios.length - 1
+                                ? null
+                                : BoxDecoration(
+                                    border: Border(bottom: BorderSide())),
                           );
                         },
                       ),
